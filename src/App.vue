@@ -88,6 +88,18 @@ const isAuthenticated = computed(() => authStore.isAuthenticated)
   --warning:#f4b400;
 }
 
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Inter, Nunito, sans-serif;
+  background:var(--bg)
+}
+
+.material-symbols-outlined{font-size:22px;vertical-align:middle}
+
+/* LAYOUT */
+.main-content{margin-left:260px;padding:24px}
+.two-columns{display:grid;grid-template-columns:2.2fr 1fr;gap:24px}
 
 /* SIDEBAR */
 .sidebar{
