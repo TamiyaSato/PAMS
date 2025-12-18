@@ -108,6 +108,21 @@ body{
   padding:20px;
 }
 
+.logo{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-weight:700;
+  font-size:18px;
+  margin-bottom:24px;
+}
+
+.logo-img{
+  width:36px;
+  height:36px;
+  border-radius:50%;
+}
+
 /* HEADER */
 .overview-header{
   background:var(--card);
@@ -122,5 +137,22 @@ body{
   object-fit:cover;
 }
 
+/* MODAL */
+.modal-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.45);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:9999;
+}
 
+.modal{
+  background:#fff;
+  padding:24px;
+  border-radius:14px;
+  width:320px;
+  text-align:center;
+}
 </style>
