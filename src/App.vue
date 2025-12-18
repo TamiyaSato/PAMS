@@ -76,4 +76,39 @@ const isAuthenticated = computed(() => authStore.isAuthenticated)
   <RouterView v-else />
 </template>
 
-<style scoped></style>
+<style>
+:root{
+  --bg:#eef5f9;
+  --card:#ffffff;
+  --primary:#0a1551;
+  --accent:#0d6efd;
+  --muted:#8a8a8a;
+  --border:#e5eaf0;
+  --success:#1e8e3e;
+  --warning:#f4b400;
+}
+
+
+/* SIDEBAR */
+.sidebar{
+  background:#0a1551;
+  color:#fff;
+  padding:20px;
+}
+
+/* HEADER */
+.overview-header{
+  background:var(--card);
+  border-bottom:1px solid var(--border);
+}
+
+/* PROFILE */
+.profile-pic{
+  width:38px;
+  height:38px;
+  border-radius:50%;
+  object-fit:cover;
+}
+
+
+</style>
