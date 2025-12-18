@@ -14,19 +14,16 @@ const isAuthenticated = computed(() => authStore.isAuthenticated)
     <v-card>
       <v-layout class="rounded rounded-md border">
 
-        <v-navigation-drawer expand-on-hover permanent rail class="sidebar">
-
-
-
+        <v-navigation-drawer expand-on-hover permanent rail>
           <v-list>
             <v-list-item
               prepend-avatar="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRRUcux_QhsmbgtdjMe3q2djMPS2oKtPYUAEw&s"
               subtitle="Administrator"
               title="Bongo Cat"
-            />
+            ></v-list-item>
           </v-list>
 
-          <v-divider />
+          <v-divider></v-divider>
 
           <v-list density="compact" nav>
             <v-list-item prepend-icon="dashboard" title="Dashboard" to="/" />
