@@ -83,7 +83,7 @@ function required(v: string) {
       <v-form v-model="form" @submit.prevent="handleSubmit">
         <v-text-field
           clearable
-          prepend-inner-icon="mdi-account"
+          prepend-inner-icon="account_box"
           label="Username"
           variant="outlined"
           :rules="[required]"
@@ -92,7 +92,7 @@ function required(v: string) {
 
         <v-text-field
           clearable
-          prepend-inner-icon="mdi-domain"
+          prepend-inner-icon="domain"
           label="Password"
           type="password"
           variant="outlined"
