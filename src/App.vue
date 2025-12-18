@@ -13,7 +13,7 @@ const isAuthenticated = computed(() => authStore.isAuthenticated)
   <v-container v-if="isAuthenticated" fluid>
     <v-card>
       <v-layout class="rounded rounded-md border">
-        <!-- SIDEBAR -->
+
         <v-navigation-drawer expand-on-hover permanent rail class="sidebar">
 
 
@@ -40,18 +40,19 @@ const isAuthenticated = computed(() => authStore.isAuthenticated)
           </v-list>
         </v-navigation-drawer>
 
-        <!-- HEADER -->
+
         <v-app-bar title="PAMS" class="overview-header" />
 
-        <!-- MAIN CONTENT -->
-        <v-main class="main-content">
-          <RouterView />
+
+        <v-main class="d-flex align-center justify-center" height="300">
+          <v-container>
+            <RouterView />
+          </v-container>
         </v-main>
       </v-layout>
     </v-card>
   </v-container>
-
-  <RouterView v-else />
+   <RouterView v-else />
 </template>
 
 
