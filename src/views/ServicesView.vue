@@ -59,7 +59,13 @@
 
 
         <v-col cols="12">
-          <v-text-field label="Slots*" required />
+           <v-number-input
+          :max="55"
+          :min="1"
+          :model-value="1"
+          label="Open Slots*"
+          required
+        ></v-number-input>
         </v-col>
 
         <v-col cols="12">
