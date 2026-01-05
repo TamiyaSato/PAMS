@@ -10,70 +10,92 @@ const isAuthenticated = computed(() => authStore.isAuthenticated)
 </script>
 
 <template>
-  <v-container v-if="isAuthenticated">
-    <v-card>
-      <v-layout class="rounded rounded-md border">
-        <v-navigation-drawer expand-on-hover permanent rail>
+  <v-app>
+    <v-container fluid v-if="isAuthenticated" class="pa-0">
+      <v-layout>
+
+
+        <v-navigation-drawer
+          expand-on-hover
+          permanent
+          rail
+          color="#0a1551"
+        >
           <v-list>
             <v-list-item
               prepend-avatar="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRRUcux_QhsmbgtdjMe3q2djMPS2oKtPYUAEw&s"
               subtitle="Administrator"
               title="Bongo Cat"
-            ></v-list-item>
+            />
           </v-list>
 
-          <v-divider></v-divider>
+          <v-divider />
 
           <v-list density="compact" nav>
-            <v-list-item
-              prepend-icon="dashboard"
-              title="Dashboard"
-              value="dashboard"
-              to="/"
-            ></v-list-item>
-            <v-list-item
-              prepend-icon="inventory_2"
-              title="Services"
-              value="services"
-              to="/about"
-            ></v-list-item>
-            <v-list-item
-              prepend-icon="description"
-              title="Applications"
-              value="applications"
-              to="/tami"
-            ></v-list-item>
-            <v-list-item
-              prepend-icon="campaign"
-              title="Annoucements"
-              value="annoucements"
-            ></v-list-item>
-            <v-list-item
-              prepend-icon="bar_chart"
-              title="Activity Logs"
-              value="activity_logs"
-            ></v-list-item>
-            <v-list-item
-              prepend-icon="event"
-              title="Appointments"
-              value="appointments"
-            ></v-list-item>
-            <v-list-item prepend-icon="folder" title="History" value="history"></v-list-item>
-            <v-list-item prepend-icon="settings" title="Settings" value="settings"></v-list-item>
+            <v-list-item prepend-icon="dashboard" title="Dashboard" to="/" />
+            <v-list-item prepend-icon="inventory_2" title="Services" to="/services" />
+            <v-list-item prepend-icon="description" title="Applications" to="/applications" />
+            <v-list-item prepend-icon="campaign" title="Announcements" to="/announcements" />
+            <v-list-item prepend-icon="bar_chart" title="Activity Logs" to="/activity-logs" />
+            <v-list-item prepend-icon="event" title="Appointments" to="/appointments" />
+            <v-list-item prepend-icon="folder" title="History" to="/history" />
+            <v-list-item prepend-icon="settings" title="Settings" to="/settings" />
           </v-list>
         </v-navigation-drawer>
 
-        <v-app-bar title="PAMS"></v-app-bar>
 
-        <v-main class="d-flex align-center justify-center" height="300">
-          <v-container>
-            <RouterView />
-          </v-container>
+        <v-main>
+          <v-app-bar flat title="PAMS" />
+
+          <RouterView />
         </v-main>
+
       </v-layout>
-    </v-card>
-  </v-container>
-  <RouterView v-else />
+    </v-container>
+
+    <RouterView v-else />
+  </v-app>
 </template>
 
-<style scoped></style>
+<style scoped>
+
+:deep(.v-navigation-drawer) {
+  font-family: 'Inter', sans-serif;
+}
+
+
+:deep(.v-list-item-title),
+:deep(.v-list-item-subtitle),
+:deep(.v-icon) {
+  color: #ffffff !important;
+}
+
+
+:deep(.v-list-item-title) {
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.1px;
+}
+
+
+:deep(.v-list-item .v-icon) {
+  font-size: 20px;
+}
+
+
+:deep(.v-list-item) {
+  margin: 6px 10px;
+  padding: 10px;
+}
+
+
+:deep(.v-navigation-drawer--rail .v-list-item) {
+  justify-content: flex-start;
+  padding-left: 14px !important;
+}
+
+:deep(.v-navigation-drawer--rail .v-icon) {
+  transform: translateX(-11px);
+}
+
+</style>

@@ -10,12 +10,16 @@ import { createVuetify } from 'vuetify'
 import { aliases, md } from 'vuetify/iconsets/md'
 import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
+import { VDateInput } from 'vuetify/labs/VDateInput'
 
 import App from './App.vue'
 import router from './router'
 
 const vuetify = createVuetify({
-  components,
+    components: {
+    ...components,
+    VDateInput,
+  },
   directives,
   icons: {
     defaultSet: 'md',
