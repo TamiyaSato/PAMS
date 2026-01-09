@@ -1,12 +1,28 @@
 <script setup lang="ts">
 import api from '@/api/axios'
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import type { serviceResponse } from '@/models/serviceResponse'
 
 const dialog = ref(false)
-const tabs = ['All', 'Active', 'Full Slots', 'Drafts', 'Archived']
+const tabs = ['All', 'Active', 'Drafts', 'Archived']
 const activeTab = ref('All')
 const services = ref<serviceResponse[]>([])
+
+function getStatus(s: serviceResponse) {
+  return s.active ?? 0
+}
+
+const filteredServices = computed(() => {
+  const all = services.value || []
+  const tab = activeTab.value
+
+  if (tab === 'All') return all
+  if (tab === 'Active') return all.filter((s) => getStatus(s) === 1)
+  if (tab === 'Drafts') return all.filter((s) => getStatus(s) === 2)
+  if (tab === 'Archived') return all.filter((s) => getStatus(s) === 3)
+
+  return all
+})
 
 async function fetchServices() {
   try {
@@ -171,9 +187,9 @@ onMounted(() => {
         </thead>
 
         <tbody>
-          <tr v-for="(service, index) in services" :key="service.id">
+          <tr v-for="service in filteredServices" :key="service.id">
             <td><input type="checkbox" /></td>
-            <td>{{ index }}</td>
+            <td>{{ service.id }}</td>
             <td>{{ service.name }}</td>
             <td>{{ service.description }}</td>
             <td>{{ service.category }}</td>
