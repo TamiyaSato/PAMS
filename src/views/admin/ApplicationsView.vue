@@ -5,7 +5,6 @@
   />
 
   <div class="services-view">
-
     <div class="top-header">
       <div class="welcome">
         <h2>Hi, Admin!</h2>
@@ -38,7 +37,6 @@
       </div>
     </div>
 
-
     <div class="stats">
       <div class="stat-card">
         <div class="stat-left">
@@ -64,7 +62,6 @@
         <div class="count">01</div>
       </div>
     </div>
-
 
     <div class="table-card">
       <div class="table-top">
@@ -127,67 +124,59 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from "vue";
+import { ref } from 'vue'
 
-const tabs = [
-  "All",
-  "Viewed",
-  "Verification",
-  "Approved",
-  "Denied",
-  "On Hold",
-  "Scheduled",
-];
+const tabs = ['All', 'Viewed', 'Verification', 'Approved', 'Denied', 'On Hold', 'Scheduled']
 
-const activeTab = ref("All");
+const activeTab = ref('All')
 
 const applications = [
   {
-    queue: "PWD-010",
-    name: "Charlie F. Sanchez",
-    disability: "Psychosocial",
-    service: "Christmas Package",
-    category: "House-to-House",
-    date: "2025-12-05",
-    status: "Denied",
+    queue: 'PWD-010',
+    name: 'Charlie F. Sanchez',
+    disability: 'Psychosocial',
+    service: 'Christmas Package',
+    category: 'House-to-House',
+    date: '2025-12-05',
+    status: 'Denied',
   },
   {
-    queue: "PWD-011",
-    name: "Juan A. Dela Cruz",
-    disability: "Psychosocial",
-    service: "Christmas Package",
-    category: "House-to-House",
-    date: "2025-12-03",
-    status: "Verify",
+    queue: 'PWD-011',
+    name: 'Juan A. Dela Cruz',
+    disability: 'Psychosocial',
+    service: 'Christmas Package',
+    category: 'House-to-House',
+    date: '2025-12-03',
+    status: 'Verify',
   },
   {
-    queue: "PWD-012",
-    name: "Luz V. Minda",
-    disability: "Hearing",
-    service: "Wheelchair Distribution",
-    category: "PWD Application",
-    date: "2025-10-05",
-    status: "Actions",
+    queue: 'PWD-012',
+    name: 'Luz V. Minda',
+    disability: 'Hearing',
+    service: 'Wheelchair Distribution',
+    category: 'PWD Application',
+    date: '2025-10-05',
+    status: 'Actions',
   },
   {
-    queue: "PWD-014",
-    name: "Maria A. Josefina",
-    disability: "Visual",
-    service: "Eyeglass Distribution",
-    category: "PWD Application",
-    date: "2025-11-15",
-    status: "Scheduled",
+    queue: 'PWD-014',
+    name: 'Maria A. Josefina',
+    disability: 'Visual',
+    service: 'Eyeglass Distribution',
+    category: 'PWD Application',
+    date: '2025-11-15',
+    status: 'Scheduled',
   },
   {
-    queue: "PWD-015",
-    name: "Marie S. Soriano",
-    disability: "Visual",
-    service: "Eyeglass Distribution",
-    category: "PWD Application",
-    date: "2025-11-17",
-    status: "On Hold",
+    queue: 'PWD-015',
+    name: 'Marie S. Soriano',
+    disability: 'Visual',
+    service: 'Eyeglass Distribution',
+    category: 'PWD Application',
+    date: '2025-11-17',
+    status: 'On Hold',
   },
-];
+]
 </script>
 
 <style scoped>
@@ -238,8 +227,6 @@ const applications = [
   color: white;
 }
 
-
-
 .table-card {
   background: white;
   border-radius: 14px;
@@ -273,7 +260,7 @@ const applications = [
 }
 
 .tab.active::after {
-  content: "";
+  content: '';
   position: absolute;
   bottom: -1px;
   left: 0;
@@ -332,6 +319,9 @@ const applications = [
 }
 
 .material-symbols-outlined {
-  font-variation-settings: "FILL" 0, "wght" 500, "opsz" 24;
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 500,
+    'opsz' 24;
 }
 </style>

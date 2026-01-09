@@ -133,10 +133,10 @@ onMounted(() => {
 
         <v-dialog v-model="dialog" max-width="600">
           <template v-slot:activator="{ props: activatorProps }">
-            <v-btn class="pill yellow text-none font-weight-regular" v-bind="activatorProps">
+            <button class="pill yellow" v-bind="activatorProps">
               <span class="material-symbols-outlined">add</span>
               New Service
-            </v-btn>
+            </button>
           </template>
 
           <v-card prepend-icon="mdi-account" title="Service Details">
