@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import api from '@/api/axios'
-import { onMounted, ref, computed } from 'vue'
+import { onMounted, ref, computed, watch } from 'vue'
 import type { serviceResponse } from '@/models/serviceResponse'
+import TableLoading from '@/components/TableLoading.vue'
 
 const dialog = ref(false)
 const tabs = ['All', 'Active', 'Drafts', 'Archived']
 const activeTab = ref('All')
 const services = ref<serviceResponse[]>([])
+const loading = ref(false)
 
 function getStatus(s: serviceResponse) {
   return s.active ?? 0
@@ -24,12 +26,76 @@ const filteredServices = computed(() => {
   return all
 })
 
+const newService = ref<Partial<serviceResponse>>({
+  name: '',
+  description: '',
+  requirements: '',
+  category: '',
+  active: 1,
+  date_created: '',
+})
+
+async function saveService() {
+  try {
+    // prepare payload (strip undefined fields)
+    const dateCreated = newService.value.date_created
+      ? new Date(newService.value.date_created).toISOString().split('T')[0]
+      : ''
+
+    const payload: unknown = {
+      name: newService.value.name,
+      description: newService.value.description,
+      requirements: newService.value.requirements,
+      category: newService.value.category,
+      active: newService.value.active,
+      date_created: dateCreated,
+    }
+
+    await api.post('/api/v1/service-types', payload)
+    dialog.value = false
+    // refresh list
+    await fetchServices()
+    // reset form
+    newService.value = {
+      name: '',
+      description: '',
+      requirements: '',
+      category: '',
+      active: 1,
+      date_created: '',
+    }
+  } catch (error) {
+    console.error('Error saving service:', error)
+  }
+}
+
+watch(dialog, (val) => {
+  if (val) {
+    // reset form whenever dialog opens
+    newService.value = {
+      name: '',
+      description: '',
+      requirements: '',
+      category: '',
+      active: 1,
+      date_created: '',
+    }
+  }
+})
+
 async function fetchServices() {
+  loading.value = true
   try {
     const response = await api.get<serviceResponse[]>('/api/v1/service-types')
-    services.value = response.data
+    // trim date_created to YYYY-MM-DD format
+    services.value = response.data.map((service) => ({
+      ...service,
+      date_created: service.date_created ? service.date_created.split('T')[0] : '',
+    })) as serviceResponse[]
   } catch (error) {
     console.error('Error fetching services:', error)
+  } finally {
+    loading.value = false
   }
 }
 
@@ -77,33 +143,31 @@ onMounted(() => {
             <v-card-text>
               <v-row dense>
                 <v-col cols="12">
-                  <v-text-field label="Service Name*" required />
+                  <v-text-field v-model="newService.name" label="Service Name*" required />
                 </v-col>
 
                 <v-col cols="12">
-                  <v-text-field label=" Description*" required />
-                </v-col>
-
-                <v-col cols="12">
-                  <v-number-input
-                    :max="55"
-                    :min="1"
-                    :model-value="1"
-                    label="Open Slots*"
-                    required
-                  ></v-number-input>
-                </v-col>
-
-                <v-col cols="12">
-                  <v-date-input label="Date input"></v-date-input>
+                  <v-text-field v-model="newService.description" label=" Description*" required />
                 </v-col>
 
                 <v-col cols="12">
                   <v-autocomplete
-                    :items="['House-to-House', ' PWD Application']"
+                    v-model="newService.category"
+                    :items="['Financial', 'Goods', 'Training', 'Medical']"
                     label="Category"
                     auto-select-first
                   />
+                </v-col>
+
+                <v-col cols="12">
+                  <v-text-field v-model="newService.requirements" label=" Requirements*" required />
+                </v-col>
+
+                <v-col cols="12">
+                  <v-date-input
+                    v-model="newService.date_created"
+                    label="Cut-Off Date"
+                  ></v-date-input>
                 </v-col>
               </v-row>
 
@@ -117,7 +181,7 @@ onMounted(() => {
 
               <v-btn variant="plain" @click="dialog = false"> Close </v-btn>
 
-              <v-btn color="primary" variant="tonal" @click="dialog = false"> Save </v-btn>
+              <v-btn color="primary" variant="tonal" @click="saveService"> Save </v-btn>
             </v-card-actions>
           </v-card>
         </v-dialog>
@@ -172,38 +236,40 @@ onMounted(() => {
 
       <v-divider></v-divider>
 
-      <v-table class="services-table" height="480px" fixed-header>
-        <thead>
-          <tr>
-            <th></th>
-            <th>ID</th>
-            <th>Service Name</th>
-            <th>Description</th>
-            <th>Category</th>
-            <th>Requirements</th>
-            <th>Cut-Off Date</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
+      <TableLoading :loading="loading" message="Loading services..." height="480px">
+        <v-table class="services-table" height="480px" fixed-header>
+          <thead>
+            <tr>
+              <th></th>
+              <th>ID</th>
+              <th>Service Name</th>
+              <th>Description</th>
+              <th>Category</th>
+              <th>Requirements</th>
+              <th>Cut-Off Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
 
-        <tbody>
-          <tr v-for="service in filteredServices" :key="service.id">
-            <td><input type="checkbox" /></td>
-            <td>{{ service.id }}</td>
-            <td>{{ service.name }}</td>
-            <td>{{ service.description }}</td>
-            <td>{{ service.category }}</td>
-            <td>{{ service.requirements }}</td>
-            <td>{{ service.date_created }}</td>
-            <td>
-              <button class="actions-btn">
-                Actions
-                <span class="material-symbols-outlined">expand_more</span>
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </v-table>
+          <tbody>
+            <tr v-for="service in filteredServices" :key="service.id">
+              <td><input type="checkbox" /></td>
+              <td>{{ service.id }}</td>
+              <td>{{ service.name }}</td>
+              <td>{{ service.description }}</td>
+              <td>{{ service.category }}</td>
+              <td>{{ service.requirements }}</td>
+              <td>{{ service.date_created }}</td>
+              <td>
+                <button class="actions-btn">
+                  Actions
+                  <span class="material-symbols-outlined">expand_more</span>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </v-table>
+      </TableLoading>
     </div>
   </v-container>
 </template>
