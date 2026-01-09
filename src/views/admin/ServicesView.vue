@@ -1,8 +1,29 @@
+<script setup lang="ts">
+import api from '@/api/axios'
+import { onMounted, ref } from 'vue'
+import type { serviceResponse } from '@/models/serviceResponse'
+
+const dialog = ref(false)
+const tabs = ['All', 'Active', 'Full Slots', 'Drafts', 'Archived']
+const activeTab = ref('All')
+const services = ref<serviceResponse[]>([])
+
+async function fetchServices() {
+  try {
+    const response = await api.get<serviceResponse[]>('/api/v1/service-types')
+    services.value = response.data
+  } catch (error) {
+    console.error('Error fetching services:', error)
+  }
+}
+
+onMounted(() => {
+  fetchServices()
+})
+</script>
+
 <template>
-
-
-  <div class="services-view">
-
+  <v-container fluid class="admin-container">
     <div class="top-header">
       <div class="welcome">
         <h2>Hi, Admin!</h2>
@@ -28,87 +49,64 @@
           <span class="material-symbols-outlined">calendar_month</span>
         </button>
 
-        <v-dialog
-  v-model="dialog"
-  max-width="600"
->
-  <template v-slot:activator="{ props: activatorProps }">
-    <v-btn
-      class="pill yellow text-none font-weight-regular"
-      v-bind="activatorProps"
-    >
-      <span class="material-symbols-outlined">add</span>
-      New Service
-    </v-btn>
-  </template>
+        <v-dialog v-model="dialog" max-width="600">
+          <template v-slot:activator="{ props: activatorProps }">
+            <v-btn class="pill yellow text-none font-weight-regular" v-bind="activatorProps">
+              <span class="material-symbols-outlined">add</span>
+              New Service
+            </v-btn>
+          </template>
 
-  <v-card
-    prepend-icon="mdi-account"
-    title="Service Details"
-  >
-    <v-card-text>
+          <v-card prepend-icon="mdi-account" title="Service Details">
+            <v-card-text>
+              <v-row dense>
+                <v-col cols="12">
+                  <v-text-field label="Service Name*" required />
+                </v-col>
 
-      <v-row dense>
-        <v-col cols="12">
-          <v-text-field label="Service Name*" required />
-        </v-col>
+                <v-col cols="12">
+                  <v-text-field label=" Description*" required />
+                </v-col>
 
-        <v-col cols="12">
-          <v-text-field label=" Description*" required />
-        </v-col>
+                <v-col cols="12">
+                  <v-number-input
+                    :max="55"
+                    :min="1"
+                    :model-value="1"
+                    label="Open Slots*"
+                    required
+                  ></v-number-input>
+                </v-col>
 
+                <v-col cols="12">
+                  <v-date-input label="Date input"></v-date-input>
+                </v-col>
 
+                <v-col cols="12">
+                  <v-autocomplete
+                    :items="['House-to-House', ' PWD Application']"
+                    label="Category"
+                    auto-select-first
+                  />
+                </v-col>
+              </v-row>
 
-        <v-col cols="12">
-           <v-number-input
-          :max="55"
-          :min="1"
-          :model-value="1"
-          label="Open Slots*"
-          required
-        ></v-number-input>
-        </v-col>
+              <small class="text-caption text-medium-emphasis">*indicates required field</small>
+            </v-card-text>
 
-        <v-col cols="12">
+            <v-divider />
 
-        <v-date-input label="Date input"></v-date-input>
-        </v-col>
+            <v-card-actions>
+              <v-spacer />
 
+              <v-btn variant="plain" @click="dialog = false"> Close </v-btn>
 
-        <v-col cols="12">
-          <v-autocomplete
-            :items="[
-              'House-to-House',
-              ' PWD Application',
-            ]"
-            label="Category"
-            auto-select-first
-          />
-        </v-col>
-      </v-row>
-
-      <small class="text-caption text-medium-emphasis">*indicates required field</small>
-
-    </v-card-text>
-
-    <v-divider />
-
-    <v-card-actions>
-      <v-spacer />
-
-      <v-btn variant="plain" @click="dialog = false">
-        Close
-      </v-btn>
-
-      <v-btn color="primary" variant="tonal" @click="dialog = false">
-        Save
-      </v-btn>
-    </v-card-actions>
-  </v-card>
-</v-dialog>
+              <v-btn color="primary" variant="tonal" @click="dialog = false"> Save </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
       </div>
     </div>
-
 
     <div class="stats">
       <div class="stat-card">
@@ -136,10 +134,8 @@
       </div>
     </div>
 
-
     <div class="table-card">
       <div class="table-top">
-
         <div class="tabs">
           <button
             v-for="tab in tabs"
@@ -160,11 +156,7 @@
 
       <v-divider></v-divider>
 
-
-      <v-table class="services-table"
-      height="480px"
-      fixed-header>
-
+      <v-table class="services-table" height="480px" fixed-header>
         <thead>
           <tr>
             <th></th>
@@ -172,149 +164,21 @@
             <th>Service Name</th>
             <th>Description</th>
             <th>Category</th>
-            <th>Open Slots</th>
+            <th>Requirements</th>
             <th>Cut-Off Date</th>
             <th>Actions</th>
           </tr>
         </thead>
 
         <tbody>
-          <tr>
+          <tr v-for="(service, index) in services" :key="service.id">
             <td><input type="checkbox" /></td>
-            <td>1</td>
-            <td>Wheelchair Distribution</td>
-            <td>ABC</td>
-            <td>House-to-House</td>
-            <td>04 / 15</td>
-            <td>2026-01-15</td>
-            <td>
-              <button class="actions-btn">
-                Actions
-                <span class="material-symbols-outlined">expand_more</span>
-              </button>
-            </td>
-          </tr>
-
-          <tr>
-            <td><input type="checkbox" /></td>
-            <td>2</td>
-            <td>Christmas Package</td>
-            <td>ABC</td>
-            <td>House-to-House</td>
-            <td>27 / 30</td>
-            <td>2025-12-20</td>
-            <td>
-              <button class="actions-btn">
-                Actions
-                <span class="material-symbols-outlined">expand_more</span>
-              </button>
-            </td>
-          </tr>
-
-          <tr>
-            <td><input type="checkbox" /></td>
-            <td>3</td>
-            <td>Prosthetic Upper Limb</td>
-            <td>ABC</td>
-            <td>House-to-House</td>
-            <td>08 / 15</td>
-            <td>2025-12-20</td>
-            <td>
-              <button class="actions-btn">
-                Actions
-                <span class="material-symbols-outlined">expand_more</span>
-              </button>
-            </td>
-          </tr>
-
-          <tr>
-            <td><input type="checkbox" /></td>
-            <td>4</td>
-            <td>Eyeglasses Distribution</td>
-            <td>ABC</td>
-            <td>PWD Application</td>
-            <td>49 / 55</td>
-            <td>2026-01-03</td>
-            <td>
-              <button class="actions-btn">
-                Actions
-                <span class="material-symbols-outlined">expand_more</span>
-              </button>
-            </td>
-          </tr>
-
-          <tr>
-            <td><input type="checkbox" /></td>
-            <td>1</td>
-            <td>Wheelchair Distribution</td>
-            <td>ABC</td>
-            <td>House-to-House</td>
-            <td>04 / 15</td>
-            <td>2026-01-15</td>
-            <td>
-              <button class="actions-btn">
-                Actions
-                <span class="material-symbols-outlined">expand_more</span>
-              </button>
-            </td>
-          </tr>
-
-          <tr>
-            <td><input type="checkbox" /></td>
-            <td>2</td>
-            <td>Christmas Package</td>
-            <td>ABC</td>
-            <td>House-to-House</td>
-            <td>27 / 30</td>
-            <td>2025-12-20</td>
-            <td>
-              <button class="actions-btn">
-                Actions
-                <span class="material-symbols-outlined">expand_more</span>
-              </button>
-            </td>
-          </tr>
-
-          <tr>
-            <td><input type="checkbox" /></td>
-            <td>2</td>
-            <td>Christmas Package</td>
-            <td>ABC</td>
-            <td>House-to-House</td>
-            <td>27 / 30</td>
-            <td>2025-12-20</td>
-            <td>
-              <button class="actions-btn">
-                Actions
-                <span class="material-symbols-outlined">expand_more</span>
-              </button>
-            </td>
-          </tr>
-
-          <tr>
-            <td><input type="checkbox" /></td>
-            <td>3</td>
-            <td>Prosthetic Upper Limb</td>
-            <td>ABC</td>
-            <td>House-to-House</td>
-            <td>08 / 15</td>
-            <td>2025-12-20</td>
-            <td>
-              <button class="actions-btn">
-                Actions
-                <span class="material-symbols-outlined">expand_more</span>
-              </button>
-            </td>
-          </tr>
-
-          <tr>
-            <td><input type="checkbox" /></td>
-            <td>4</td>
-            <td>Eyeglasses Distribution</td>
-            <td>ABC</td>
-            <td>PWD Application</td>
-            <td>49 / 55</td>
-            <td>2026-01-03</td>
+            <td>{{ index }}</td>
+            <td>{{ service.name }}</td>
+            <td>{{ service.description }}</td>
+            <td>{{ service.category }}</td>
+            <td>{{ service.requirements }}</td>
+            <td>{{ service.date_created }}</td>
             <td>
               <button class="actions-btn">
                 Actions
@@ -325,71 +189,13 @@
         </tbody>
       </v-table>
     </div>
-  </div>
+  </v-container>
 </template>
 
-<script lang="ts" setup>
-import { ref } from "vue";
-
-const dialog = ref(false);
-const tabs = ["All", "Active", "Full Slots", "Drafts", "Archived"];
-const activeTab = ref("All");
-</script>
-
 <style scoped>
-.services-view {
-  background: #eef5f9;
-  padding: 24px;
-  min-height: 100vh;
-  font-family: Inter, sans-serif;
-}
-
-
-.top-header {
-  display: flex;
-  justify-content: space-between;
-}
-
-.top-actions {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.search-box {
-  background: white;
-  padding: 10px 14px;
-  border-radius: 999px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.search-box input {
-  border: none;
-  outline: none;
-}
-
-
-.pill {
-  border-radius: 999px;
-  padding: 10px 16px;
-  font-weight: 600;
-  border: none;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.pill.dark {
-  background: #0b1b5a;
-  color: white;
-}
-
 .pill.yellow {
   background: #ffbf00;
 }
-
 
 .table-card {
   background: white;
@@ -402,7 +208,6 @@ const activeTab = ref("All");
   justify-content: space-between;
   margin-bottom: 12px;
 }
-
 
 .tabs {
   display: flex;
@@ -425,7 +230,7 @@ const activeTab = ref("All");
 }
 
 .tab.active::after {
-  content: "";
+  content: '';
   position: absolute;
   bottom: -1px;
   left: 0;
@@ -433,7 +238,6 @@ const activeTab = ref("All");
   height: 2px;
   background: #0d6efd;
 }
-
 
 .services-table {
   width: 100%;
@@ -458,9 +262,8 @@ const activeTab = ref("All");
   padding: 16px 12px;
 }
 
-
 .actions-btn {
-background: #0b1b5a;
+  background: #0b1b5a;
   color: white;
   border-radius: 999px;
   border: none;
@@ -480,8 +283,10 @@ background: #0b1b5a;
   gap: 6px;
 }
 
-
 .material-symbols-outlined {
-  font-variation-settings: "FILL" 0, "wght" 500, "opsz" 24;
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 500,
+    'opsz' 24;
 }
 </style>

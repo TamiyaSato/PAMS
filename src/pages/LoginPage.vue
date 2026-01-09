@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/api/axios'
-import type { LoginResponse } from '@/models/LoginResponse'
+import type { loginResponse } from '@/models/loginResponse'
 import bgLogin from '@/assets/wmremove-transformed.png'
 
 const router = useRouter()
@@ -26,7 +26,7 @@ const handleSubmit = async (event: Event) => {
   isLoading.value = true
 
   try {
-    const response = await api.post<LoginResponse>('/api/v1/users/login', {
+    const response = await api.post<loginResponse>('/api/v1/users/login', {
       username: username.value,
       password: password.value,
     })

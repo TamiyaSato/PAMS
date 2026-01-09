@@ -1,10 +1,7 @@
-<script setup lang="ts">
-</script>
+<script setup lang="ts"></script>
 
 <template>
-  <v-container fluid class="dashboard">
-
-
+  <v-container fluid class="admin-container">
     <div class="top-header">
       <div class="welcome">
         <h2>Hi, Admin!</h2>
@@ -32,7 +29,6 @@
       </div>
     </div>
 
-
     <div class="stats">
       <div class="stat-card">
         <div class="stat-left">
@@ -59,9 +55,7 @@
       </div>
     </div>
 
-
     <v-row>
-
       <v-col cols="12" md="8">
         <v-card class="content-card">
           <h3>Service Management</h3>
@@ -92,49 +86,46 @@
           </div>
         </v-card>
 
-
         <v-card class="content-card mt-4">
           <h3>Application Review</h3>
 
           <div class="review-row">
-  <div class="review-cell applicant">
-    <v-avatar size="40">
-      <img
-        src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRRUcux_QhsmbgtdjMe3q2djMPS2oKtPYUAEw&s"
-      />
-    </v-avatar>
-    <div>
-      <div class="value">Juan A. Dela Cruz</div>
-      <div class="label">Applicant</div>
-    </div>
-  </div>
+            <div class="review-cell applicant">
+              <v-avatar size="40">
+                <img
+                  src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRRUcux_QhsmbgtdjMe3q2djMPS2oKtPYUAEw&s"
+                />
+              </v-avatar>
+              <div>
+                <div class="value">Juan A. Dela Cruz</div>
+                <div class="label">Applicant</div>
+              </div>
+            </div>
 
-  <div class="review-cell">
-    <div class="value">Psychosocial</div>
-    <div class="label">Disability</div>
-  </div>
+            <div class="review-cell">
+              <div class="value">Psychosocial</div>
+              <div class="label">Disability</div>
+            </div>
 
-  <div class="review-cell">
-    <div class="value">Christmas Package</div>
-    <div class="label">Service</div>
-  </div>
+            <div class="review-cell">
+              <div class="value">Christmas Package</div>
+              <div class="label">Service</div>
+            </div>
 
-  <div class="review-cell">
-    <div class="value">2025-12-03</div>
-    <div class="label">Date</div>
-  </div>
+            <div class="review-cell">
+              <div class="value">2025-12-03</div>
+              <div class="label">Date</div>
+            </div>
 
-  <div class="review-actions">
-    <button class="actions-btn">
-      Actions
-      <v-icon end>expand_more</v-icon>
-    </button>
-  </div>
-</div>
-
+            <div class="review-actions">
+              <button class="actions-btn">
+                Actions
+                <v-icon end>expand_more</v-icon>
+              </button>
+            </div>
+          </div>
         </v-card>
       </v-col>
-
 
       <v-col cols="12" md="4">
         <v-card class="content-card">
@@ -165,58 +156,6 @@
 </template>
 
 <style scoped>
-.dashboard {
-  background: #eef5f9;
-  padding: 24px;
-  min-height: 100vh;
-  font-family: Inter, sans-serif;
-}
-
-
-.top-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 24px;
-}
-
-.top-actions {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.search-box {
-  background: white;
-  padding: 10px 14px;
-  border-radius: 999px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.search-box input {
-  border: none;
-  outline: none;
-  background: transparent;
-}
-
-
-.pill {
-  border-radius: 999px;
-  padding: 10px 16px;
-  font-weight: 600;
-  border: none;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.pill.dark {
-  background: #0b1b5a;
-  color: white;
-}
-
-
 .content-card {
   background: white;
   border-radius: 16px;
@@ -226,7 +165,6 @@
 .content-card h3 {
   margin-bottom: 16px;
 }
-
 
 .service-row {
   display: grid;
@@ -253,7 +191,6 @@
   cursor: pointer;
 }
 
-
 .review-row {
   display: grid;
   grid-template-columns: 2.4fr 1.4fr 1.6fr 1.2fr auto;
@@ -279,7 +216,6 @@
   align-items: center;
 }
 
-
 .value {
   font-size: 15px;
   font-weight: 600;
@@ -292,7 +228,6 @@
   line-height: 1.2;
 }
 
-
 .actions-btn {
   background: #0b1b5a;
   color: white;
@@ -304,7 +239,6 @@
   gap: 6px;
   height: 36px;
 }
-
 
 .appointment {
   display: flex;

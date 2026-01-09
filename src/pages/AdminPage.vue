@@ -80,7 +80,6 @@ watch(
           </v-card-actions>
         </v-card>
       </v-dialog>
-
       <RouterView />
     </v-main>
   </v-layout>
