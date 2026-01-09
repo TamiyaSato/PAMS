@@ -47,6 +47,7 @@
     title="Service Details"
   >
     <v-card-text>
+
       <v-row dense>
         <v-col cols="12">
           <v-text-field label="Service Name*" required />
