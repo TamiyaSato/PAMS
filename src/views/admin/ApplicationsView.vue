@@ -1,3 +1,66 @@
+<script lang="ts" setup>
+import { ref, computed } from 'vue'
+
+const tabs = ['All', 'Viewed', 'Verification', 'Approved', 'Denied', 'On Hold', 'Scheduled']
+
+const activeTab = ref('All')
+
+const applications = [
+  {
+    queue: 'PWD-010',
+    name: 'Charlie F. Sanchez',
+    disability: 'Psychosocial',
+    service: 'Christmas Package',
+    category: 'House-to-House',
+    date: '2025-12-05',
+    status: 'Denied',
+  },
+  {
+    queue: 'PWD-011',
+    name: 'Juan A. Dela Cruz',
+    disability: 'Psychosocial',
+    service: 'Christmas Package',
+    category: 'House-to-House',
+    date: '2025-12-03',
+    status: 'Verify',
+  },
+  {
+    queue: 'PWD-012',
+    name: 'Luz V. Minda',
+    disability: 'Hearing',
+    service: 'Wheelchair Distribution',
+    category: 'PWD Application',
+    date: '2025-10-05',
+    status: 'Actions',
+  },
+  {
+    queue: 'PWD-014',
+    name: 'Maria A. Josefina',
+    disability: 'Visual',
+    service: 'Eyeglass Distribution',
+    category: 'PWD Application',
+    date: '2025-11-15',
+    status: 'Scheduled',
+  },
+  {
+    queue: 'PWD-015',
+    name: 'Marie S. Soriano',
+    disability: 'Visual',
+    service: 'Eyeglass Distribution',
+    category: 'PWD Application',
+    date: '2025-11-17',
+    status: 'On Hold',
+  },
+]
+
+const filteredApplications = computed(() => {
+  if (activeTab.value === 'All') {
+    return applications
+  }
+  return applications.filter((app) => app.status === activeTab.value)
+})
+</script>
+
 <template>
   <link
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
@@ -99,7 +162,7 @@
         </thead>
 
         <tbody>
-          <tr v-for="row in applications" :key="row.queue">
+          <tr v-for="row in filteredApplications" :key="row.queue">
             <td><input type="checkbox" /></td>
             <td>{{ row.queue }}</td>
             <td>{{ row.name }}</td>
@@ -122,62 +185,6 @@
     </div>
   </div>
 </template>
-
-<script lang="ts" setup>
-import { ref } from 'vue'
-
-const tabs = ['All', 'Viewed', 'Verification', 'Approved', 'Denied', 'On Hold', 'Scheduled']
-
-const activeTab = ref('All')
-
-const applications = [
-  {
-    queue: 'PWD-010',
-    name: 'Charlie F. Sanchez',
-    disability: 'Psychosocial',
-    service: 'Christmas Package',
-    category: 'House-to-House',
-    date: '2025-12-05',
-    status: 'Denied',
-  },
-  {
-    queue: 'PWD-011',
-    name: 'Juan A. Dela Cruz',
-    disability: 'Psychosocial',
-    service: 'Christmas Package',
-    category: 'House-to-House',
-    date: '2025-12-03',
-    status: 'Verify',
-  },
-  {
-    queue: 'PWD-012',
-    name: 'Luz V. Minda',
-    disability: 'Hearing',
-    service: 'Wheelchair Distribution',
-    category: 'PWD Application',
-    date: '2025-10-05',
-    status: 'Actions',
-  },
-  {
-    queue: 'PWD-014',
-    name: 'Maria A. Josefina',
-    disability: 'Visual',
-    service: 'Eyeglass Distribution',
-    category: 'PWD Application',
-    date: '2025-11-15',
-    status: 'Scheduled',
-  },
-  {
-    queue: 'PWD-015',
-    name: 'Marie S. Soriano',
-    disability: 'Visual',
-    service: 'Eyeglass Distribution',
-    category: 'PWD Application',
-    date: '2025-11-17',
-    status: 'On Hold',
-  },
-]
-</script>
 
 <style scoped>
 .services-view {
