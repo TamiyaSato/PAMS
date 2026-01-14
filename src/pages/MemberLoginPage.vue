@@ -3,7 +3,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/api/axios'
-import type { loginResponse } from '@/models/loginResponse'
+import type { loginResponse } from '@/models/LoginResponse'
 import pamsLogo from '@/assets/PAMS.png'
 
 import slide1 from '@/assets/rectangle.png'

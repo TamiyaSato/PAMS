@@ -2,6 +2,7 @@
 import { RouterView, useRouter } from 'vue-router'
 import { computed, ref, watch } from 'vue'
 import { useAuthStore } from '../stores/auth'
+import pamsLogo from '@/assets/PAMS.png'
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -30,24 +31,20 @@ watch(
 <template>
   <v-layout>
     <v-navigation-drawer expand-on-hover permanent rail color="#0a1551">
-      <v-list>
-        <v-list-item
-          prepend-avatar="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRRUcux_QhsmbgtdjMe3q2djMPS2oKtPYUAEw&s"
-          subtitle="Administrator"
-          title="Bongo Cat"
-        />
-      </v-list>
+      <div class="logo-section">
+        <img :src="pamsLogo" alt="PAMS Logo" class="logo-image" />
+      </div>
+      <v-list> </v-list>
 
       <v-divider />
 
       <v-list density="compact" nav>
-        <v-list-item prepend-icon="dashboard" title="Dashboard" to="/dashboard" />
-        <v-list-item prepend-icon="inventory_2" title="Services" to="/services" />
-        <v-list-item prepend-icon="description" title="Applications" to="/applications" />
-        <v-list-item prepend-icon="campaign" title="Announcements" to="/announcements" />
-        <v-list-item prepend-icon="bar_chart" title="Activity Logs" to="/activity-logs" />
-        <v-list-item prepend-icon="event" title="Appointments" to="/appointments" />
-
+        <v-list-item prepend-icon="dashboard" title="Dashboard" to="/admin" />
+        <v-list-item prepend-icon="inventory_2" title="Services" to="/admin/services" />
+        <v-list-item prepend-icon="description" title="Applications" to="/admin/applications" />
+        <v-list-item prepend-icon="campaign" title="Announcements" to="/admin/announcements" />
+        <v-list-item prepend-icon="bar_chart" title="Activity Logs" to="/admin/activity-logs" />
+        <v-list-item prepend-icon="event" title="Appointments" to="/admin/appointments" />
         <v-spacer />
       </v-list>
 
@@ -170,5 +167,17 @@ watch(
   min-width: 90px;
   height: 36px;
   font-weight: 600;
+}
+
+.logo-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 22px 22px;
+}
+.logo-image {
+  height: 100px;
+  width: auto;
+  object-fit: contain;
 }
 </style>
