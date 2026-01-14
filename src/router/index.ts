@@ -5,58 +5,80 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
-      path: '/login',
-      name: 'login',
-      component: () => import('../pages/LoginPage.vue'),
+      path: '/admin/login',
+      name: 'admin-login',
+      component: () => import('../pages/AdminLoginPage.vue'),
       meta: { requiresAuth: false },
     },
     {
-      path: '/',
-      name: 'dashboard',
-      component: () => import('../views/admin/DashboardView.vue'),
-      meta: { requiresAuth: true },
+      path: '/member/login',
+      name: 'member-login',
+      component: () => import('../pages/MemberLoginPage.vue'),
+      meta: { requiresAuth: false },
     },
     {
-      path: '/services',
-      name: 'services',
-      component: () => import('../views/admin/ServicesView.vue'),
+      path: '/admin',
+      name: 'admin',
+      component: () => import('../pages/AdminPage.vue'),
       meta: { requiresAuth: true },
+      children: [
+        {
+          path: '',
+          component: () => import('../views/admin/DashboardView.vue'),
+        },
+        {
+          path: 'services',
+          component: () => import('../views/admin/ServicesView.vue'),
+        },
+        {
+          path: 'applications',
+          component: () => import('../views/admin/ApplicationsView.vue'),
+        },
+        {
+          path: 'announcements',
+          component: () => import('../views/admin/AnnouncementsView.vue'),
+        },
+        {
+          path: 'activity-logs',
+          component: () => import('../views/admin/ActivityLogsView.vue'),
+        },
+        {
+          path: 'appointments',
+          component: () => import('../views/admin/AppointmentsView.vue'),
+        },
+      ],
     },
     {
-      path: '/applications',
-      name: 'applications',
-      component: () => import('../views/admin/ApplicationsView.vue'),
+      path: '/member',
+      name: 'member',
+      component: () => import('../pages/MemberPage.vue'),
       meta: { requiresAuth: true },
-    },
-    {
-      path: '/announcements',
-      name: 'announcements',
-      component: () => import('../views/admin/AnnouncementsView.vue'),
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/activity-logs',
-      name: 'activity-logs',
-      component: () => import('../views/admin/ActivityLogsView.vue'),
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/appointments',
-      name: 'appointments',
-      component: () => import('../views/admin/AppointmentsView.vue'),
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/history',
-      name: 'history',
-      component: () => import('../views/admin/HistoryView.vue'),
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/settings',
-      name: 'settings',
-      component: () => import('../views/admin/SettingsView.vue'),
-      meta: { requiresAuth: true },
+      children: [
+        {
+          path: '',
+          component: () => import('../views/pwd/MemberDashboardView.vue'),
+        },
+        {
+          path: 'services',
+          component: () => import('../views/admin/ServicesView.vue'),
+        },
+        {
+          path: 'applications',
+          component: () => import('../views/admin/ApplicationsView.vue'),
+        },
+        {
+          path: 'announcements',
+          component: () => import('../views/admin/AnnouncementsView.vue'),
+        },
+        {
+          path: 'activity-logs',
+          component: () => import('../views/admin/ActivityLogsView.vue'),
+        },
+        {
+          path: 'appointments',
+          component: () => import('../views/admin/AppointmentsView.vue'),
+        },
+      ],
     },
   ],
 })
@@ -68,10 +90,13 @@ router.beforeEach((to, from, next) => {
 
   if (requiresAuth && !authStore.isAuthenticated) {
     // Redirect to login if not authenticated
-    next({ name: 'login' })
-  } else if (to.name === 'login' && authStore.isAuthenticated) {
+    next({ name: 'member-login' })
+  } else if (to.name === 'admin-login' && authStore.isAuthenticated) {
     // Redirect to home if already authenticated and trying to access login
-    next({ name: 'home' })
+    next({ name: 'admin' })
+  } else if (to.name === 'member-login' && authStore.isAuthenticated) {
+    // Redirect to home if already authenticated and trying to access login
+    next({ name: 'member' })
   } else {
     next()
   }

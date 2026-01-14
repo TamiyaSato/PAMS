@@ -14,7 +14,7 @@ const handleLogout = () => {
   logoutDialog.value = false
   localStorage.removeItem('authToken')
   authStore.logout()
-  router.push('/login')
+  router.push('/admin/login')
 }
 
 watch(
@@ -41,14 +41,12 @@ watch(
       <v-divider />
 
       <v-list density="compact" nav>
-        <v-list-item prepend-icon="dashboard" title="Dashboard" to="/" />
+        <v-list-item prepend-icon="dashboard" title="Dashboard" to="/dashboard" />
         <v-list-item prepend-icon="inventory_2" title="Services" to="/services" />
         <v-list-item prepend-icon="description" title="Applications" to="/applications" />
         <v-list-item prepend-icon="campaign" title="Announcements" to="/announcements" />
         <v-list-item prepend-icon="bar_chart" title="Activity Logs" to="/activity-logs" />
         <v-list-item prepend-icon="event" title="Appointments" to="/appointments" />
-        <v-list-item prepend-icon="folder" title="History" to="/history" />
-        <v-list-item prepend-icon="settings" title="Settings" to="/settings" />
 
         <v-spacer />
       </v-list>

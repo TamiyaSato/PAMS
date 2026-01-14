@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import router from '@/router'
 
 export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = ref(false)
@@ -10,11 +9,6 @@ export const useAuthStore = defineStore('auth', () => {
   function checkAuth() {
     const token = localStorage.getItem('authToken')
     isAuthenticated.value = !!token
-
-    // Redirect to login if not authenticated
-    if (!isAuthenticated.value && router.currentRoute.value.name !== 'login') {
-      router.push({ name: 'login' })
-    }
 
     return isAuthenticated.value
   }
