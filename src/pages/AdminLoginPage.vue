@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/api/axios'
-import type { loginResponse } from '@/models/LoginResponse'
+import type { loginResponse } from '@/models/loginResponse'
 import bgLogin from '@/assets/wmremove-transformed.png'
 
 const router = useRouter()

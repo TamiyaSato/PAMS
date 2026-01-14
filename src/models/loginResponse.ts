@@ -1,4 +1,4 @@
-export interface LoginResponse {
+export interface loginResponse {
   token?: string
   message?: string
 }
