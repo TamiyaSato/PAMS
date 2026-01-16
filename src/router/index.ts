@@ -48,6 +48,7 @@ const router = createRouter({
         },
       ],
     },
+
     {
       path: '/member',
       name: 'member',
@@ -62,21 +63,27 @@ const router = createRouter({
           path: 'services',
           component: () => import('../views/pwd/MemberServicesView.vue'),
         },
+
         {
-          path: 'applications',
-          component: () => import('../views/admin/ApplicationsView.vue'),
-        },
-        {
-          path: 'announcements',
-          component: () => import('../views/admin/AnnouncementsView.vue'),
-        },
-        {
-          path: 'activity-logs',
-          component: () => import('../views/admin/ActivityLogsView.vue'),
-        },
-        {
-          path: 'appointments',
-          component: () => import('../views/admin/AppointmentsView.vue'),
+          path: 'account',
+          component: () => import('../views/pwd/MemberAccountView.vue'),
+          children: [
+            {
+              path: '',
+              name: 'member-profile',
+              component: () => import('../views/pwd/MemberProfileView.vue'),
+            },
+            {
+              path: 'edit',
+              name: 'member-edit-profile',
+              component: () => import('../views/pwd/MemberEditProfileView.vue'),
+            },
+            {
+              path: 'password',
+              name: 'member-change-password',
+              component: () => import('../views/pwd/MemberChangePasswordView.vue'),
+            },
+          ],
         },
       ],
     },
