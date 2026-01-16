@@ -2,7 +2,7 @@
 import { RouterView, useRouter } from 'vue-router'
 import { computed, ref, watch } from 'vue'
 import { useAuthStore } from '../stores/auth'
-import pamsLogo from '@/assets/PAMS.png'
+import pamsLogo from '@/assets/PAMS Logo 2.png'
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -59,7 +59,7 @@ watch(
     </v-navigation-drawer>
 
     <v-main>
-      <v-app-bar flat title="PAMS" />
+      <v-app-bar flat title="Overview" />
 
       <v-dialog v-if="isAuthenticated" v-model="logoutDialog" max-width="420" persistent>
         <v-card class="logout-card">
@@ -173,10 +173,10 @@ watch(
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 22px 22px;
+  padding: 22px 20px;
 }
 .logo-image {
-  height: 100px;
+  height: 130px;
   width: auto;
   object-fit: contain;
 }

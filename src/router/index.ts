@@ -60,7 +60,7 @@ const router = createRouter({
         },
         {
           path: 'services',
-          component: () => import('../views/admin/ServicesView.vue'),
+          component: () => import('../views/pwd/MemberServicesView.vue'),
         },
         {
           path: 'applications',
