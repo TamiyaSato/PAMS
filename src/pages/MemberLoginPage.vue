@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/api/axios'
 import type { loginResponse } from '@/models/LoginResponse'
 import pamsLogo from '@/assets/PAMS.png'
+import type { AxiosError } from 'axios'
 
 import slide1 from '@/assets/rectangle.png'
 import slide2 from '@/assets/wheelchair.jpg'
@@ -12,32 +13,32 @@ import slide3 from '@/assets/blind.jpg'
 
 const slides = [slide1, slide2, slide3]
 const currentSlide = ref(0)
-
 let interval: number
 
 onMounted(() => {
   interval = window.setInterval(() => {
     currentSlide.value = (currentSlide.value + 1) % slides.length
-  }, 3000)
+  }, 3500)
 })
-
-onUnmounted(() => {
-  clearInterval(interval)
-})
+onUnmounted(() => clearInterval(interval))
 
 const router = useRouter()
 const authStore = useAuthStore()
+
+const username = ref('')
+const password = ref('')
+const remember = ref(false)
+const form = ref(false)
 
 const errorMessage = ref('')
 const successMessage = ref('')
 const isLoading = ref(false)
 
-const form = ref(false)
-const username = ref(null)
-const password = ref(null)
+function required(v: string) {
+  return !!v || 'Field is required'
+}
 
-const handleSubmit = async (event: Event) => {
-  event.preventDefault()
+const handleSubmit = async () => {
   if (!form.value) return
 
   errorMessage.value = ''
@@ -53,36 +54,37 @@ const handleSubmit = async (event: Event) => {
     const data = response.data
 
     if (data.token) {
-      successMessage.value = 'Login successful!'
+      successMessage.value = 'Login successful! Redirecting...'
 
-      // Store token and user data
-      localStorage.setItem('authToken', data.token)
+      if (remember.value) {
+        localStorage.setItem('authToken', data.token)
+      } else {
+        sessionStorage.setItem('authToken', data.token)
+      }
 
-      // Update auth store
       authStore.login(data.token)
 
-      // Redirect to home
-      router.push('/member')
+      setTimeout(() => {
+        router.push('/member')
+      }, 1200)
     } else {
-      errorMessage.value = 'Login failed. Please try again.'
+      errorMessage.value = 'Invalid login credentials.'
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (error: any) {
-    if (error.response) {
-      errorMessage.value = error.response.data?.message || 'Login failed. Please try again.'
-    } else if (error.request) {
-      errorMessage.value = 'Network error. Please check your connection and try again.'
-    } else {
-      errorMessage.value = 'An error occurred. Please try again.'
-    }
-    console.error('Login error:', error)
-  } finally {
-    isLoading.value = false
-  }
-}
+  } catch (error: unknown) {
+    const err = error as AxiosError<{ message?: string }>
 
-function required(v: string) {
-  return !!v || 'Field is required'
+    if (err.response) {
+      errorMessage.value = err.response.data?.message || 'Login failed.'
+    } else if (err.request) {
+      errorMessage.value = 'Network error. Please try again.'
+    } else {
+      errorMessage.value = 'Unexpected error occurred.'
+    }
+
+    console.error('Login error:', err)
+  }
+  {
+  }
 }
 </script>
 
@@ -93,6 +95,12 @@ function required(v: string) {
         <div class="logo-row">
           <img :src="pamsLogo" alt="PAMS Logo" class="logo-image" />
         </div>
+
+        <h1 class="title">Welcome Back!</h1>
+        <p class="subtitle">Log in to your PAMS account</p>
+
+        <div v-if="errorMessage" class="toast error">{{ errorMessage }}</div>
+        <div v-if="successMessage" class="toast success">{{ successMessage }}</div>
 
         <v-form v-model="form" @submit.prevent="handleSubmit">
           <div class="field">
@@ -120,10 +128,10 @@ function required(v: string) {
 
           <div class="options">
             <label class="remember">
-              <input type="checkbox" />
+              <input type="checkbox" v-model="remember" />
               <span>Remember me</span>
             </label>
-            <a class="reset" href="#">Reset Password?</a>
+            <RouterLink class="reset" to="/forgot-password">Forgot Password?</RouterLink>
           </div>
 
           <button class="login-btn" :disabled="!form || isLoading">
@@ -133,7 +141,7 @@ function required(v: string) {
 
         <p class="register">
           Don’t have an account yet?
-          <a href="#">Register with PAMS today.</a>
+          <RouterLink to="/register">Register with PAMS today.</RouterLink>
         </p>
       </div>
     </div>
@@ -151,7 +159,7 @@ function required(v: string) {
 
       <div class="dots">
         <span
-          v-for="(dot, index) in slides"
+          v-for="(_, index) in slides"
           :key="index"
           class="dot"
           :class="{ active: index === currentSlide }"
@@ -175,8 +183,7 @@ function required(v: string) {
   min-width: 440px;
   padding: 48px 56px;
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  align-items: center;
 }
 
 .content {
@@ -184,15 +191,11 @@ function required(v: string) {
 }
 
 .logo-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 48px;
+  margin-bottom: 20px;
 }
 
 .logo-image {
-  height: 200px;
-  width: auto;
+  height: 90px;
   object-fit: contain;
 }
 
@@ -232,7 +235,6 @@ label {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #374151;
 }
 
 .reset {
@@ -256,18 +258,26 @@ label {
 .register {
   margin-top: 28px;
   font-size: 14px;
-  color: #374151;
 }
 
 .register a {
   color: #2563eb;
-  text-decoration: none;
   font-weight: 500;
 }
 
-.footer-date {
-  font-size: 12px;
-  color: #2563eb;
+.toast {
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 14px;
+  font-size: 14px;
+}
+.toast.error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+.toast.success {
+  background: #dcfce7;
+  color: #166534;
 }
 
 .right {
@@ -275,10 +285,17 @@ label {
   position: relative;
 }
 
-.right img {
+.slide-image {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  opacity: 0;
+  transition: opacity 1s ease-in-out;
+}
+.slide-image.active {
+  opacity: 1;
 }
 
 .overlay {
@@ -304,19 +321,5 @@ label {
 
 .dot.active {
   background: #facc15;
-}
-
-.slide-image {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: 0;
-  transition: opacity 1s ease-in-out;
-}
-
-.slide-image.active {
-  opacity: 1;
 }
 </style>

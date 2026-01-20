@@ -16,6 +16,14 @@ const router = createRouter({
       component: () => import('../pages/MemberLoginPage.vue'),
       meta: { requiresAuth: false },
     },
+
+    {
+      path: '/register',
+      name: 'member-register',
+      component: () => import('../pages/MemberRegisterView.vue'),
+      meta: { requiresAuth: false },
+    },
+
     {
       path: '/admin',
       name: 'admin',
@@ -63,7 +71,6 @@ const router = createRouter({
           path: 'services',
           component: () => import('../views/pwd/MemberServicesView.vue'),
         },
-
         {
           path: 'account',
           component: () => import('../views/pwd/MemberAccountView.vue'),
@@ -96,13 +103,10 @@ router.beforeEach((to, from, next) => {
   const requiresAuth = to.meta.requiresAuth !== false
 
   if (requiresAuth && !authStore.isAuthenticated) {
-    // Redirect to login if not authenticated
     next({ name: 'member-login' })
   } else if (to.name === 'admin-login' && authStore.isAuthenticated) {
-    // Redirect to home if already authenticated and trying to access login
     next({ name: 'admin' })
   } else if (to.name === 'member-login' && authStore.isAuthenticated) {
-    // Redirect to home if already authenticated and trying to access login
     next({ name: 'member' })
   } else {
     next()
