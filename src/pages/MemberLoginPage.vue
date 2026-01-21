@@ -3,7 +3,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/api/axios'
-import type { loginResponse } from '@/models/LoginResponse'
+import type { LoginResponse } from '@/models/LoginResponse'
 import pamsLogo from '@/assets/PAMS.png'
 import type { AxiosError } from 'axios'
 
@@ -46,7 +46,7 @@ const handleSubmit = async () => {
   isLoading.value = true
 
   try {
-    const response = await api.post<loginResponse>('/api/v1/users/login', {
+    const response = await api.post<LoginResponse>('/api/v1/users/login', {
       username: username.value,
       password: password.value,
     })
