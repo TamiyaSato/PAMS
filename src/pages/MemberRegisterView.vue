@@ -18,6 +18,12 @@ const email = ref('')
 const phone = ref('')
 const password = ref('')
 const confirmPassword = ref('')
+
+const dateOfBirth = ref('')
+const gender = ref('')
+const disabilityType = ref('')
+const address = ref('')
+
 const agreed = ref(false)
 const newsletter = ref(false)
 
@@ -25,7 +31,17 @@ const handleRegister = async () => {
   errorMessage.value = ''
   successMessage.value = ''
 
-  if (!firstName.value || !lastName.value || !email.value || !phone.value || !password.value) {
+  if (
+    !firstName.value ||
+    !lastName.value ||
+    !email.value ||
+    !phone.value ||
+    !password.value ||
+    !dateOfBirth.value ||
+    !gender.value ||
+    !disabilityType.value ||
+    !address.value
+  ) {
     errorMessage.value = 'Please complete all required fields.'
     return
   }
@@ -44,10 +60,16 @@ const handleRegister = async () => {
 
   try {
     await api.post('/api/v1/persons', {
-      firstName: firstName.value,
-      lastName: lastName.value,
+      full_name: `${firstName.value} ${lastName.value}`,
+      date_of_birth: dateOfBirth.value,
+      gender: gender.value,
+      disability_type: disabilityType.value,
+      address: address.value,
+      contact_no: phone.value,
+      status: 'Active',
+      date_registered: new Date().toISOString().split('T')[0],
+
       email: email.value,
-      phone: phone.value,
       password: password.value,
     })
 
@@ -68,6 +90,8 @@ const handleRegister = async () => {
     }
 
     console.error('Register error:', err)
+  } finally {
+    isLoading.value = false
   }
 }
 </script>
@@ -78,13 +102,11 @@ const handleRegister = async () => {
       <div class="left-overlay">
         <div class="left-content">
           <img :src="pamsLogo" class="logo" />
-
           <h2>PWD Assistance<br />Management System (PAMS)</h2>
           <p>
             Register to apply for PWD assistance, track applications, and receive barangay
             announcements.
           </p>
-
           <div class="left-actions">
             <button class="btn primary">Learn More</button>
             <button class="btn outline">Our Features</button>
@@ -112,12 +134,34 @@ const handleRegister = async () => {
           </div>
 
           <div>
-            <label>E-mail Address</label>
+            <label>Email</label>
             <input v-model="email" type="email" />
           </div>
           <div>
             <label>Phone Number</label>
             <input v-model="phone" type="text" />
+          </div>
+
+          <div>
+            <label>Date of Birth</label>
+            <input v-model="dateOfBirth" type="date" />
+          </div>
+          <div>
+            <label>Gender</label>
+            <select v-model="gender" class="input">
+              <option value="">Select Gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Disability Type</label>
+            <input v-model="disabilityType" type="text" />
+          </div>
+          <div>
+            <label>Address</label>
+            <input v-model="address" type="text" />
           </div>
 
           <div>
@@ -138,10 +182,7 @@ const handleRegister = async () => {
 
           <label class="checkbox-row">
             <input type="checkbox" v-model="agreed" />
-            <span>
-              I agree to all the
-              <a href="#">Terms</a>, <a href="#">Privacy Policy</a>
-            </span>
+            <span> I agree to the <a href="#">Terms</a> and <a href="#">Privacy Policy</a> </span>
           </label>
         </div>
 
@@ -181,6 +222,10 @@ const handleRegister = async () => {
 .left-content {
   color: white;
   max-width: 400px;
+}
+.left-actions {
+  display: flex;
+  gap: 12px;
 }
 .logo {
   height: 100px;
@@ -248,6 +293,15 @@ input {
   border: 1.5px solid #3b82f6;
   border-radius: 5px;
 }
+select.input {
+  width: 100%;
+  padding: 10px;
+  border: 1.5px solid #3b82f6;
+  border-radius: 5px;
+  font-size: 14px;
+  background: white;
+}
+
 .checkbox-group {
   display: flex;
   flex-direction: column;

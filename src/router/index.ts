@@ -72,6 +72,11 @@ const router = createRouter({
           component: () => import('../views/pwd/MemberServicesView.vue'),
         },
         {
+          path: 'status',
+          name: 'member-status',
+          component: () => import('../views/pwd/MemberApplicationStatusView.vue'),
+        },
+        {
           path: 'account',
           component: () => import('../views/pwd/MemberAccountView.vue'),
           children: [

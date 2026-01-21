@@ -5,8 +5,24 @@ import type { serviceResponse } from '@/models/serviceResponse'
 import TableLoading from '@/components/TableLoading.vue'
 import catto from '../../assets/catto.jpg'
 
+async function fetchServices() {
+  loadingServices.value = true
+  try {
+    const res = await api.get<serviceResponse[]>('/api/v1/service-types')
+    services.value = res.data
+    console.log('Services loaded:', services.value)
+  } catch (e) {
+    console.error('Error fetching services:', e)
+  } finally {
+    loadingServices.value = false
+  }
+}
 const activeTab = ref('Active')
 
+const showPopup = ref(false)
+const popupMessage = ref('')
+
+const loadingServices = ref(false)
 const services = ref<serviceResponse[]>([])
 const loading = ref(false)
 
@@ -24,16 +40,20 @@ const filteredServices = computed(() => {
   return all
 })
 
-async function fetchServices() {
+async function applyForService(service: serviceResponse) {
   loading.value = true
   try {
-    const response = await api.get<serviceResponse[]>('/api/v1/service-types')
-    services.value = response.data.map((service) => ({
-      ...service,
-      date_created: service.date_created ? service.date_created.split('T')[0] : '',
-    }))
+    await new Promise((resolve) => setTimeout(resolve, 500))
+
+    const serviceToUpdate = services.value.find((s) => s.id === service.id)
+    if (serviceToUpdate) serviceToUpdate.active = 2
+
+    popupMessage.value = `Successfully applied for ${service.name}!`
+    showPopup.value = true
   } catch (error) {
-    console.error('Error fetching services:', error)
+    popupMessage.value = `Failed to apply for ${service.name}`
+    showPopup.value = true
+    console.error(error)
   } finally {
     loading.value = false
   }
@@ -115,7 +135,14 @@ onMounted(fetchServices)
               <td>{{ service.date_created }}</td>
 
               <td>
-                <button v-if="getStatus(service) === 1" class="apply-btn">Apply Here</button>
+                <button
+                  v-if="getStatus(service) === 1"
+                  class="apply-btn"
+                  :disabled="loading"
+                  @click="applyForService(service)"
+                >
+                  Apply Here
+                </button>
 
                 <span v-else-if="getStatus(service) === 2" class="status-pill applied">
                   Edit/Cancel
@@ -130,6 +157,19 @@ onMounted(fetchServices)
         </v-table>
       </TableLoading>
     </div>
+    <v-dialog v-model="showPopup" max-width="400">
+      <v-card class="pa-4 text-center">
+        <v-card-title class="text-h6"> Application Status </v-card-title>
+
+        <v-card-text>
+          {{ popupMessage }}
+        </v-card-text>
+
+        <v-card-actions class="justify-center">
+          <v-btn color="primary" @click="showPopup = false"> OK </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
