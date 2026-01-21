@@ -48,13 +48,8 @@ watch(
         <v-spacer />
       </v-list>
 
-      <v-list class="pb-2">
-        <v-list-item
-          prepend-icon="mdi-logout"
-          title="Logout"
-          class="logout-item"
-          @click="logoutDialog = true"
-        />
+      <v-list density="compact" nav class="pb-2">
+        <v-list-item prepend-icon="mdilogout" title="Logout" @click="logoutDialog = true" />
       </v-list>
     </v-navigation-drawer>
 
@@ -114,6 +109,10 @@ watch(
 :deep(.v-navigation-drawer--rail .v-icon) {
   transform: translateX(-11px);
 }
+:deep(.v-navigation-drawer--rail) .logo-image {
+  width: 100px;
+  height: 100px;
+}
 
 .logout-item {
   color: #cfd8dc;
@@ -171,13 +170,26 @@ watch(
 
 .logo-section {
   display: flex;
+  justify-content: center;
   align-items: center;
-  gap: 10px;
-  padding: 22px 20px;
+  padding: 16px;
 }
+:deep(.v-navigation-drawer--rail) .logo-section {
+  padding: 10px;
+}
+
 .logo-image {
-  height: 130px;
-  width: auto;
+  width: 200px;
+  height: 200px;
   object-fit: contain;
+}
+
+:deep(.logout-item.v-list-item) {
+  margin: 6px 10px;
+  padding: 10px;
+}
+:deep(.logout-item) {
+  width: calc(100% - 20px);
+  transform: translateX(-11px);
 }
 </style>

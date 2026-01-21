@@ -227,10 +227,14 @@ const handleRegister = async () => {
   display: flex;
   gap: 12px;
 }
+
 .logo {
-  height: 100px;
-  margin-bottom: 30px;
+  height: 170px;
+  width: auto;
+  object-fit: contain;
+  margin-bottom: 20px;
 }
+
 .left-content h2 {
   font-size: 28px;
   margin-bottom: 16px;

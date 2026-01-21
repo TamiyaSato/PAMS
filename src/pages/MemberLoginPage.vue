@@ -195,8 +195,10 @@ const handleSubmit = async () => {
 }
 
 .logo-image {
-  height: 90px;
+  height: 170px;
+  width: auto;
   object-fit: contain;
+  margin-bottom: 20px;
 }
 
 .title {

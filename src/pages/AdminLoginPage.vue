@@ -127,7 +127,6 @@ function required(v: string) {
   color: #fff;
 }
 
-/* Login container */
 .login-container {
   background: rgba(0, 0, 0, 0.35);
   backdrop-filter: blur(6px);
@@ -144,7 +143,6 @@ function required(v: string) {
   font-weight: 700;
 }
 
-/* Labels */
 .login-container label {
   display: block;
   margin-bottom: 6px;
@@ -152,7 +150,6 @@ function required(v: string) {
   opacity: 0.9;
 }
 
-/* Inputs */
 .login-container input[type='input'],
 .login-container input[type='password'] {
   width: 100%;
@@ -164,7 +161,6 @@ function required(v: string) {
   font-size: 14px;
 }
 
-/* Footer row */
 .form-footer {
   display: flex;
   justify-content: space-between;
@@ -182,7 +178,6 @@ function required(v: string) {
   text-decoration: underline;
 }
 
-/* Button */
 button {
   width: 100%;
   padding: 13px;
@@ -198,7 +193,6 @@ button:hover {
   background: #e0b000;
 }
 
-/* Messages */
 .error-message {
   color: #e00000;
   text-align: center;
@@ -218,7 +212,6 @@ button:disabled {
   cursor: not-allowed;
 }
 
-/* Timestamp */
 .bottom-left-timestamp {
   position: fixed;
   bottom: 15px;
