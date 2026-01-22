@@ -143,6 +143,8 @@ const handleSubmit = async () => {
           Don’t have an account yet?
           <RouterLink to="/register">Register with PAMS today.</RouterLink>
         </p>
+
+        <RouterLink to="/admin/login" class="admin-btn"> Are you an Admin? Login here. </RouterLink>
       </div>
     </div>
 
@@ -323,5 +325,24 @@ label {
 
 .dot.active {
   background: #facc15;
+}
+.admin-btn {
+  display: block;
+  margin-top: 14px;
+  width: 100%;
+  text-align: center;
+  padding: 12px 0;
+  border-radius: 6px;
+  border: 1px solid #0b1b5a;
+  color: #0b1b5a;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.admin-btn:hover {
+  background: #0b1b5a;
+  color: #fff;
 }
 </style>
