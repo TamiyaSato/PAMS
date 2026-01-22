@@ -18,7 +18,7 @@ let interval: number
 onMounted(() => {
   interval = window.setInterval(() => {
     currentSlide.value = (currentSlide.value + 1) % slides.length
-  }, 3500)
+  }, 3000)
 })
 onUnmounted(() => clearInterval(interval))
 
