@@ -255,37 +255,69 @@ onMounted(fetchAppointments)
       </div>
     </div>
 
-    <table class="appointments-table">
-      <thead>
-        <tr>
-          <th class="col-check"></th>
-          <th class="col-id">Appointment ID</th>
-          <th class="col-applicant">Applicant</th>
-          <th class="col-service">Service</th>
-          <th class="col-datetime">Date & Time</th>
-          <th class="col-staff">Assigned Staff</th>
-          <th class="col-status">Status</th>
-          <th class="col-action"></th>
-        </tr>
-      </thead>
+    <div class="all-appointments">
+      <div class="all-appointments-header">
+        <h3>All Appointments</h3>
 
-      <tbody>
-        <tr v-for="a in normalizedAppointments" :key="a.id">
-          <td class="col-check"><input type="checkbox" /></td>
-          <td class="col-id">{{ a.id }}</td>
-          <td class="col-applicant">Applicant {{ a.person_id }}</td>
-          <td class="col-service">Service {{ a.service_id }}</td>
-          <td class="col-datetime">{{ formatDateTime(a.preferred_date) }}</td>
-          <td class="col-staff">Staff {{ a.user_id }}</td>
-          <td class="col-status">
-            <span class="status-pill">{{ a.status_text }}</span>
-          </td>
-          <td class="col-action">
-            <button class="pill blue small">View</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+        <div class="header-actions">
+          <button class="pill dark">
+            Action
+            <span class="material-symbols-outlined">expand_more</span>
+          </button>
+
+          <button class="pill green">
+            <span class="material-symbols-outlined">upload</span>
+            Export
+          </button>
+        </div>
+      </div>
+
+      <div class="appointments-columns">
+        <div></div>
+        <div>Appointment ID</div>
+        <div>Applicant/s</div>
+        <div>Service</div>
+        <div>Date</div>
+        <div>Assigned Staff</div>
+        <div>Status</div>
+        <div></div>
+      </div>
+
+      <div v-for="a in normalizedAppointments" :key="a.id" class="appointment-row">
+        <div class="cell check">
+          <input type="checkbox" />
+        </div>
+
+        <div class="cell id">{{ a.id }}</div>
+
+        <div class="cell applicant">
+          {{ a.applicant_name ?? `Applicant ${a.person_id}` }}
+        </div>
+
+        <div class="cell service">
+          {{ a.service_name ?? `Service ${a.service_id}` }}
+        </div>
+
+        <div class="cell datetime">
+          {{ formatDateTime(a.preferred_date) }}
+          <div class="time">{{ formatTime(a) }}</div>
+        </div>
+
+        <div class="cell staff">
+          {{ a.assigned_staff ?? `Staff ${a.user_id}` }}
+        </div>
+
+        <div class="cell status">
+          <span class="status-pill" :class="a.status_text.toLowerCase()">
+            {{ a.status_text }}
+          </span>
+        </div>
+
+        <div class="cell action">
+          <button class="pill blue small">View</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -352,89 +384,45 @@ onMounted(fetchAppointments)
   border-radius: 12px;
   margin-bottom: 12px;
 }
-.appointments-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0 10px;
-  table-layout: fixed;
-}
 
-.appointments-table th,
-.appointments-table td {
-  padding: 14px;
-  text-align: left;
-  vertical-align: middle;
-  white-space: nowrap;
-}
-
-.col-check {
-  width: 40px;
-  text-align: center;
-}
-.col-id {
-  width: 140px;
-}
-.col-applicant {
-  width: 220px;
-}
-.col-service {
-  width: 260px;
-}
-.col-datetime {
-  width: 220px;
-}
-.col-staff {
-  width: 180px;
-}
-.col-status {
-  width: 140px;
-}
-.col-action {
-  width: 100px;
-}
-
-.appointments-table tbody tr {
-  background: #eef5f9;
-  border-radius: 12px;
-}
-
-.appointments-table tbody tr td:first-child {
-  border-top-left-radius: 12px;
-  border-bottom-left-radius: 12px;
-}
-
-.appointments-table tbody tr td:last-child {
-  border-top-right-radius: 12px;
-  border-bottom-right-radius: 12px;
-}
-
-.status-pill {
-  background: #dbeafe;
-  color: #1e40af;
-  padding: 4px 12px;
+.pill {
   border-radius: 999px;
-  font-weight: 600;
+  padding: 10px 18px;
+  border: none;
+  cursor: pointer;
 }
 
-.table-card {
-  background: white;
-  border-radius: 14px;
-  padding: 16px;
+.pill.yellow {
+  background: #ffbf00;
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
+.pill.blue.small {
+  background-color: #0b1b5a;
+  color: white;
+  font-size: 0.85rem;
+  padding: 6px 12px;
 }
 
-th,
-td {
-  padding: 14px;
+.pill.blue.small:hover {
+  background-color: #1e40af;
 }
 
-tbody tr {
-  background: #eef5f9;
+.pill.dark {
+  background: #0b1b5a;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
+
+.pill.green {
+  background: #1f8f4a;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .toggle {
   display: flex;
   background: #e5e7eb;
@@ -456,37 +444,99 @@ tbody tr {
   color: white;
 }
 
-.pill {
-  border-radius: 999px;
-  padding: 10px 18px;
-  border: none;
-  cursor: pointer;
+.all-appointments {
+  background: white;
+  border-radius: 16px;
+  padding: 16px;
 }
 
-.pill.yellow {
-  background: #ffbf00;
-}
-.pill {
-  border-radius: 999px;
-  padding: 10px 18px;
-  border: none;
-  cursor: pointer;
+.all-appointments-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
 }
 
-.pill.yellow {
-  background: #ffbf00;
+.all-appointments-header h3 {
+  margin: 0;
+  font-weight: 700;
 }
-.pill.blue.small {
-  background-color: #0b1b5a;
-  color: white;
+
+.appointments-columns {
+  display: grid;
+  grid-template-columns:
+    32px
+    100px
+    220px
+    260px
+    220px
+    180px
+    140px
+    100px;
+  padding: 10px 14px;
   font-size: 0.85rem;
-  padding: 6px 12px;
-  border-radius: 999px;
-  border: none;
-  cursor: pointer;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
 }
 
-.pill.blue.small:hover {
-  background-color: #1e40af;
+.appointment-row {
+  display: grid;
+  grid-template-columns:
+    32px
+    100px
+    220px
+    260px
+    220px
+    180px
+    140px
+    100px;
+  align-items: center;
+  background: #eef5f9;
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.cell {
+  font-size: 0.95rem;
+}
+
+.cell.check {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.cell.id {
+  margin-left: -6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.cell.datetime .time {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.status-pill {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.status-pill.scheduled {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.status-pill.completed {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-pill.cancelled {
+  background: #fee2e2;
+  color: #991b1b;
 }
 </style>
