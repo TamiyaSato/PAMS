@@ -100,13 +100,6 @@ watch(
           title="My Account"
           class="menu-item"
         />
-
-        <v-list-item
-          to="/member/settings"
-          prepend-icon="settings"
-          title="Settings"
-          class="menu-item"
-        />
       </v-list>
 
       <v-list class="logout-list">

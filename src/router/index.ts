@@ -77,6 +77,11 @@ const router = createRouter({
           component: () => import('../views/pwd/MemberApplicationStatusView.vue'),
         },
         {
+          path: 'appointments',
+          name: 'member-appointments',
+          component: () => import('../views/pwd/MemberAppointmentView.vue'),
+        },
+        {
           path: 'account',
           component: () => import('../views/pwd/MemberAccountView.vue'),
           children: [
@@ -96,6 +101,16 @@ const router = createRouter({
               component: () => import('../views/pwd/MemberChangePasswordView.vue'),
             },
           ],
+        },
+        {
+          path: 'support',
+          name: 'member-help',
+          component: () => import('../views/pwd/MemberHelpAndSupportView.vue'),
+        },
+        {
+          path: 'accessibility',
+          name: 'member-settings',
+          component: () => import('../views/pwd/MemberAccessibilitySettingsView.vue'),
         },
       ],
     },
