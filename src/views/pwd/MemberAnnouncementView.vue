@@ -9,7 +9,6 @@ const activeTab = ref<AnnouncementTab>('All Updates')
 
 <template>
   <v-container fluid class="member-container">
-    <!-- Top Bar -->
     <div class="top-bar">
       <h2>Announcements</h2>
 
@@ -28,9 +27,7 @@ const activeTab = ref<AnnouncementTab>('All Updates')
       </div>
     </div>
 
-    <!-- Content Card -->
     <div class="table-card">
-      <!-- Tabs -->
       <div class="tabs">
         <button
           v-for="tab in ['All Updates', 'Services', 'Community News', 'Urgent Alerts']"
@@ -45,7 +42,6 @@ const activeTab = ref<AnnouncementTab>('All Updates')
 
       <v-divider class="my-4" />
 
-      <!-- Announcement -->
       <div class="announcement-card">
         <span class="urgent-pill">Urgent</span>
 
@@ -66,7 +62,6 @@ const activeTab = ref<AnnouncementTab>('All Updates')
         </div>
       </div>
 
-      <!-- Empty space like screenshot -->
       <div class="empty-space" />
     </div>
   </v-container>
@@ -78,7 +73,6 @@ const activeTab = ref<AnnouncementTab>('All Updates')
   min-height: 90vh;
 }
 
-/* Top Bar */
 .top-bar {
   display: flex;
   justify-content: space-between;
@@ -111,14 +105,12 @@ const activeTab = ref<AnnouncementTab>('All Updates')
   border-radius: 50%;
 }
 
-/* Main Card */
 .table-card {
   background: #fff;
   border-radius: 14px;
   padding: 20px;
 }
 
-/* Tabs (same as base) */
 .tabs {
   display: flex;
   gap: 32px;
@@ -154,7 +146,6 @@ const activeTab = ref<AnnouncementTab>('All Updates')
   background: #2563eb;
 }
 
-/* Announcement */
 .announcement-card {
   background: #c7ddf0;
   border-radius: 12px;
@@ -189,7 +180,6 @@ const activeTab = ref<AnnouncementTab>('All Updates')
   cursor: pointer;
 }
 
-/* Empty area (matches screenshot) */
 .empty-space {
   height: 260px;
   background: #eef3f7;
