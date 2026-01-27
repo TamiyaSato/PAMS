@@ -237,7 +237,6 @@ onMounted(fetchAppointments)
 
     <div class="schedule">
       <div class="calendar">
-        <h4>Select Date</h4>
         <v-date-picker v-model="selectedDate" />
       </div>
 
