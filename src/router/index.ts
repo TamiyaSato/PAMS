@@ -71,6 +71,7 @@ const router = createRouter({
           path: 'services',
           component: () => import('../views/pwd/MemberServicesView.vue'),
         },
+
         {
           path: 'status',
           name: 'member-status',
@@ -111,6 +112,16 @@ const router = createRouter({
           path: 'accessibility',
           name: 'member-settings',
           component: () => import('../views/pwd/MemberAccessibilitySettingsView.vue'),
+        },
+        {
+          path: 'announcements',
+          name: 'member-announcements',
+          component: () => import('../views/pwd/MemberAnnouncementView.vue'),
+        },
+        {
+          path: 'history',
+          name: 'member-history',
+          component: () => import('../views/pwd/MemberHistoryView.vue'),
         },
       ],
     },
