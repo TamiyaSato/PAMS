@@ -18,13 +18,10 @@ const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 <template>
   <v-layout>
-    <!-- Sidebar: unchanged -->
-
     <v-main>
       <v-app-bar flat title="Appointments" />
 
       <v-container fluid>
-        <!-- Pending Confirmation -->
         <v-row>
           <v-col cols="12">
             <v-card class="pending-card">
@@ -35,7 +32,6 @@ const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
               </p>
 
               <v-row class="align-start mt-4">
-                <!-- Highlight / Appointment -->
                 <v-col cols="12" md="8">
                   <div class="highlight">
                     <strong>Wheelchair Fitting</strong>
@@ -44,7 +40,6 @@ const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
                   </div>
                 </v-col>
 
-                <!-- Action buttons -->
                 <v-col cols="12" md="4">
                   <v-btn color="#028a5c" block class="mb-2 btn-confirm"> Confirm Attendance </v-btn>
                   <v-btn color="#8f8f91" block class="btn-reschedule"> Request Reschedule </v-btn>
@@ -55,7 +50,6 @@ const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
         </v-row>
 
         <v-row class="mt-6">
-          <!-- Calendar -->
           <v-col cols="12" md="6">
             <v-card class="calendar-card">
               <div class="calendar-header">
@@ -75,7 +69,6 @@ const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
             </v-card>
           </v-col>
 
-          <!-- Appointment Details -->
           <v-col cols="12" md="6">
             <v-card class="details-card">
               <div class="details-title">Appointment Details</div>
@@ -106,7 +99,6 @@ const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
           </v-col>
         </v-row>
 
-        <!-- Appointments History -->
         <v-row class="mt-6">
           <v-col cols="12">
             <v-card class="history-card">
@@ -166,7 +158,6 @@ const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
         </v-row>
       </v-container>
 
-      <!-- Logout dialog -->
       <v-dialog v-if="isAuthenticated" v-model="logoutDialog" max-width="420" persistent>
         <v-card class="logout-card">
           <v-card-title class="logout-title"> Confirm Logout </v-card-title>
@@ -184,7 +175,6 @@ const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 </template>
 
 <style scoped>
-/* Sidebar: unchanged */
 .member-drawer {
   background: #ffffff;
   border-right: 1px solid #e5e7eb;
@@ -204,7 +194,6 @@ const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
   object-fit: contain;
 }
 
-/* Pending confirmation */
 .pending-card {
   padding: 24px 32px;
   border-radius: 12px;
@@ -245,7 +234,6 @@ const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
   font-weight: 600;
 }
 
-/* Calendar */
 .calendar-card {
   padding: 24px 24px;
   border-radius: 12px;
@@ -282,7 +270,6 @@ const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
   background-color: #eff6ff;
 }
 
-/* Appointment Details */
 .details-card {
   padding: 24px 32px;
   border-radius: 12px;
@@ -290,49 +277,42 @@ const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
-/* Title */
 .details-title {
-  font-size: 22px; /* increased from 20px */
+  font-size: 22px;
   font-weight: 700;
   margin-bottom: 16px;
 }
 
-/* Each row: label + value */
 .details-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 0; /* slightly more spacing */
+  padding: 8px 0;
 }
 
-/* Label */
 .label {
-  font-size: 14px; /* increased from 12px */
+  font-size: 14px;
   font-weight: 500;
   color: #6b7280;
 }
 
-/* Value */
 .value {
-  font-size: 16px; /* increased from 14px */
+  font-size: 16px;
   font-weight: 600;
   color: #111827;
 }
 
-/* Divider spacing */
 .v-divider.my-4 {
   margin-top: 16px;
   margin-bottom: 16px;
 }
 
-/* Subtitle */
 .details-subtitle {
-  font-size: 16px; /* increased from 14px */
+  font-size: 16px;
   font-weight: 600;
   margin-bottom: 8px;
 }
 
-/* Documents list */
 .documents {
   padding-left: 20px;
   margin: 0;
@@ -374,7 +354,6 @@ const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
   text-transform: none;
 }
 
-/* Logout dialog */
 .logout-card {
   border-radius: 14px;
   padding: 18px 12px;
@@ -420,10 +399,10 @@ const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 }
 
 .highlight {
-  background: #f59e0b; /* yellow */
+  background: #f59e0b;
   padding: 16px;
   border-radius: 10px;
-  color: #111827; /* black text */
+  color: #111827;
 }
 
 .highlight strong {
@@ -432,7 +411,7 @@ const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 .highlight div {
   font-size: 14px;
-  color: #111827; /* black text */
+  color: #111827;
   margin-top: 4px;
 }
 </style>
