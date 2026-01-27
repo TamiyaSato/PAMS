@@ -1,8 +1,6 @@
 <script setup lang="ts">
-import { RouterView } from 'vue-router'
 import { computed, ref } from 'vue'
 import { useAuthStore } from '@/stores/auth'
-import pamsLogo from '@/assets/PAMS.png'
 
 const authStore = useAuthStore()
 authStore.checkAuth()
@@ -21,19 +19,6 @@ const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 <template>
   <v-layout>
     <!-- Sidebar: unchanged -->
-    <v-navigation-drawer
-      permanent
-      rail
-      expand-on-hover
-      width="280"
-      rail-width="72"
-      class="member-drawer"
-    >
-      <div class="logo-section">
-        <img :src="pamsLogo" alt="PAMS Logo" class="logo-image" />
-      </div>
-      <RouterView />
-    </v-navigation-drawer>
 
     <v-main>
       <v-app-bar flat title="Appointments" />
@@ -61,8 +46,8 @@ const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
                 <!-- Action buttons -->
                 <v-col cols="12" md="4">
-                  <v-btn color="#045e40" block class="mb-2 btn-confirm"> Confirm Attendance </v-btn>
-                  <v-btn color="#F3F4F6" block class="btn-reschedule"> Request Reschedule </v-btn>
+                  <v-btn color="#028a5c" block class="mb-2 btn-confirm"> Confirm Attendance </v-btn>
+                  <v-btn color="#8f8f91" block class="btn-reschedule"> Request Reschedule </v-btn>
                 </v-col>
               </v-row>
             </v-card>
@@ -250,12 +235,12 @@ const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
   margin-top: 4px;
 }
 .btn-confirm {
-  background-color: #045e40;
+  background-color: #028a5c;
   color: #ffffff;
   font-weight: 600;
 }
 .btn-reschedule {
-  background-color: #f3f4f6;
+  background-color: #8f8f91;
   color: #111827;
   font-weight: 600;
 }
