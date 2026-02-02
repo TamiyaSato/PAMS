@@ -16,5 +16,6 @@ export interface applicationResponse {
   category: string
   applicant_name: string
   date_created: string
+  active: number
   status: number
 }
