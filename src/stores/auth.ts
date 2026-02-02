@@ -15,9 +15,20 @@ export const useAuthStore = defineStore('auth', () => {
 
   function login(token: string) {
     isAuthenticated.value = true
-    user.value = null
+    user.value = decodeJwtManually(token)
+    console.log(user.value.role)
     // Store token if needed
     localStorage.setItem('authToken', token)
+  }
+
+  function decodeJwtManually(token: string) {
+    try {
+      const base64Payload = token.split('.')[1]
+      const payload = atob(base64Payload)
+      return JSON.parse(payload)
+    } catch (e) {
+      return null
+    }
   }
 
   function logout() {

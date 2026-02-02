@@ -46,7 +46,7 @@ const handleSubmit = async () => {
   isLoading.value = true
 
   try {
-    const response = await api.post<LoginResponse>('/api/v1/users/login', {
+    const response = await api.post<LoginResponse>('/api/v1/persons/login', {
       username: username.value,
       password: password.value,
     })
@@ -54,8 +54,6 @@ const handleSubmit = async () => {
     const data = response.data
 
     if (data.token) {
-      successMessage.value = 'Login successful! Redirecting...'
-
       if (remember.value) {
         localStorage.setItem('authToken', data.token)
       } else {

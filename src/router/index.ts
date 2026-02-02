@@ -28,29 +28,35 @@ const router = createRouter({
       path: '/admin',
       name: 'admin',
       component: () => import('../pages/AdminPage.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, role: 'admin' },
       children: [
         {
+          name: 'admin-dashboard',
           path: '',
           component: () => import('../views/admin/DashboardView.vue'),
         },
         {
+          name: 'admin-services',
           path: 'services',
           component: () => import('../views/admin/ServicesView.vue'),
         },
         {
+          name: 'admin-applications',
           path: 'applications',
           component: () => import('../views/admin/ApplicationsView.vue'),
         },
         {
+          name: 'admin-announcements',
           path: 'announcements',
           component: () => import('../views/admin/AnnouncementsView.vue'),
         },
         {
+          name: 'admin-activity',
           path: 'activity-logs',
           component: () => import('../views/admin/ActivityLogsView.vue'),
         },
         {
+          name: 'admin-appointments',
           path: 'appointments',
           component: () => import('../views/admin/AppointmentsView.vue'),
         },
@@ -61,17 +67,18 @@ const router = createRouter({
       path: '/member',
       name: 'member',
       component: () => import('../pages/MemberPage.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, role: 'member' },
       children: [
         {
+          name: 'member-dashboard',
           path: '',
           component: () => import('../views/pwd/MemberDashboardView.vue'),
         },
         {
+          name: 'member-services',
           path: 'services',
           component: () => import('../views/pwd/MemberServicesView.vue'),
         },
-
         {
           path: 'status',
           name: 'member-status',
@@ -132,6 +139,7 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
   const requiresAuth = to.meta.requiresAuth !== false
+  const role = to.meta.role
 
   if (requiresAuth && !authStore.isAuthenticated) {
     next({ name: 'member-login' })
@@ -140,6 +148,26 @@ router.beforeEach((to, from, next) => {
   } else if (to.name === 'member-login' && authStore.isAuthenticated) {
     next({ name: 'member' })
   } else {
+    // if (role) {
+    //   const userRole = authStore.user?.role
+    //   if (userRole) {
+    //     if (userRole !== role) {
+    //       if (userRole === 'admin') {
+    //         next({ name: 'admin-login' })
+    //       } else if (userRole === 'member') {
+    //         next({ name: 'member-login' })
+    //       } else {
+    //         next({ name: 'member-login' })
+    //       }
+    //     } else {
+    //       next()
+    //     }
+    //   } else {
+    //     next({ name: 'member-login' })
+    //   }
+    // } else {
+    //   next()
+    // }
     next()
   }
 })

@@ -1,9 +1,20 @@
 <script setup lang="ts">
 import api from '@/api/axios'
 import { onMounted, ref, computed } from 'vue'
-import type { serviceResponse } from '@/models/serviceResponse'
+import type { applicationResponse, serviceResponse } from '@/models/serviceResponse'
 import TableLoading from '@/components/TableLoading.vue'
 import catto from '../../assets/catto.jpg'
+
+const activeTab = ref('Active')
+
+const showPopup = ref(false)
+const popupMessage = ref('')
+
+const loadingServices = ref(false)
+const services = ref<serviceResponse[]>([])
+const appliedServices = ref<applicationResponse[]>([])
+const cancelledServices = ref<applicationResponse[]>([])
+const loading = ref(false)
 
 async function fetchServices() {
   loadingServices.value = true
@@ -17,14 +28,32 @@ async function fetchServices() {
     loadingServices.value = false
   }
 }
-const activeTab = ref('Active')
 
-const showPopup = ref(false)
-const popupMessage = ref('')
+async function fetchAppliedServices() {
+  loadingServices.value = true
+  try {
+    const res = await api.get<applicationResponse[]>('/api/v1/transactions/me?status=1')
+    appliedServices.value = res.data
+    console.log('Applied services loaded:', appliedServices.value)
+  } catch (e) {
+    console.error('Error fetching applied services:', e)
+  } finally {
+    loadingServices.value = false
+  }
+}
 
-const loadingServices = ref(false)
-const services = ref<serviceResponse[]>([])
-const loading = ref(false)
+async function fetchCancelledServices() {
+  loadingServices.value = true
+  try {
+    const res = await api.get<applicationResponse[]>('/api/v1/transactions/me?status=3')
+    cancelledServices.value = res.data
+    console.log('Cancelled services loaded:', cancelledServices.value)
+  } catch (e) {
+    console.error('Error fetching cancelled services:', e)
+  } finally {
+    loadingServices.value = false
+  }
+}
 
 function getStatus(s: serviceResponse) {
   return s.active ?? 0
@@ -34,24 +63,29 @@ const filteredServices = computed(() => {
   const all = services.value || []
 
   if (activeTab.value === 'Active') return all.filter((s) => getStatus(s) === 1)
-  if (activeTab.value === 'Applied') return all.filter((s) => getStatus(s) === 2)
-  if (activeTab.value === 'Cancelled') return all.filter((s) => getStatus(s) === 3)
+  if (activeTab.value === 'Applied') return appliedServices.value
+  if (activeTab.value === 'Cancelled') return cancelledServices.value
 
   return all
 })
 
-async function applyForService(service: serviceResponse) {
+async function applyForService(serviceResponse: serviceResponse) {
   loading.value = true
   try {
-    await new Promise((resolve) => setTimeout(resolve, 500))
+    if (!serviceResponse.id) {
+      throw new Error('service_id is required to apply for a service')
+    }
 
-    const serviceToUpdate = services.value.find((s) => s.id === service.id)
-    if (serviceToUpdate) serviceToUpdate.active = 2
+    await api.post(`/api/v1/transactions`, {
+      service_id: serviceResponse.id,
+    })
 
-    popupMessage.value = `Successfully applied for ${service.name}!`
+    fetchAppliedServices()
+
+    popupMessage.value = `Successfully applied for ${serviceResponse.name}!`
     showPopup.value = true
   } catch (error) {
-    popupMessage.value = `Failed to apply for ${service.name}`
+    popupMessage.value = `Failed to apply for ${serviceResponse.name}`
     showPopup.value = true
     console.error(error)
   } finally {
@@ -59,7 +93,11 @@ async function applyForService(service: serviceResponse) {
   }
 }
 
-onMounted(fetchServices)
+onMounted(() => {
+  fetchServices()
+  fetchAppliedServices()
+  fetchCancelledServices()
+})
 </script>
 
 <template>

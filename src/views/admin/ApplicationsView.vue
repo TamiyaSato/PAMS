@@ -1,63 +1,44 @@
 <script lang="ts" setup>
-import { ref, computed } from 'vue'
+import api from '@/api/axios'
+import TableLoading from '@/components/TableLoading.vue'
+import type { applicationResponse } from '@/models/serviceResponse'
+import { ref, computed, onMounted } from 'vue'
 
-const tabs = ['All', 'Viewed', 'Verification', 'Approved', 'Denied', 'On Hold', 'Scheduled']
+const loading = ref(false)
 
-const activeTab = ref('All')
-
-const applications = [
-  {
-    queue: 'PWD-010',
-    name: 'Charlie F. Sanchez',
-    disability: 'Psychosocial',
-    service: 'Christmas Package',
-    category: 'House-to-House',
-    date: '2025-12-05',
-    status: 'Denied',
-  },
-  {
-    queue: 'PWD-011',
-    name: 'Juan A. Dela Cruz',
-    disability: 'Psychosocial',
-    service: 'Christmas Package',
-    category: 'House-to-House',
-    date: '2025-12-03',
-    status: 'Verify',
-  },
-  {
-    queue: 'PWD-012',
-    name: 'Luz V. Minda',
-    disability: 'Hearing',
-    service: 'Wheelchair Distribution',
-    category: 'PWD Application',
-    date: '2025-10-05',
-    status: 'Actions',
-  },
-  {
-    queue: 'PWD-014',
-    name: 'Maria A. Josefina',
-    disability: 'Visual',
-    service: 'Eyeglass Distribution',
-    category: 'PWD Application',
-    date: '2025-11-15',
-    status: 'Scheduled',
-  },
-  {
-    queue: 'PWD-015',
-    name: 'Marie S. Soriano',
-    disability: 'Visual',
-    service: 'Eyeglass Distribution',
-    category: 'PWD Application',
-    date: '2025-11-17',
-    status: 'On Hold',
-  },
+const tabs = [
+  { name: 'All', status: 0 },
+  { name: 'Approved', status: 2 },
+  { name: 'Denied', status: 3 },
 ]
 
-const filteredApplications = computed(() => {
-  if (activeTab.value === 'All') {
-    return applications
+const activeTab = ref({ name: 'All', status: 0 })
+const activeTabName = computed(() => activeTab.value.name)
+
+const applications = ref<applicationResponse[]>([])
+
+async function fetchApplications() {
+  loading.value = true
+  try {
+    const res = await api.get<applicationResponse[]>('/api/v1/transactions')
+    applications.value = res.data
+    console.log('Applications loaded:', applications.value)
+  } catch (e) {
+    console.error('Error fetching applications:', e)
+  } finally {
+    loading.value = false
   }
-  return applications.filter((app) => app.status === activeTab.value)
+}
+
+const filteredApplications = computed(() => {
+  if (activeTab.value.status === 0) {
+    return applications.value
+  }
+  return applications.value.filter((app) => app.status === activeTab.value.status)
+})
+
+onMounted(() => {
+  fetchApplications()
 })
 </script>
 
@@ -131,12 +112,12 @@ const filteredApplications = computed(() => {
         <div class="tabs">
           <button
             v-for="tab in tabs"
-            :key="tab"
+            :key="tab.name"
             class="tab"
-            :class="{ active: activeTab === tab }"
+            :class="{ active: activeTabName === tab.name }"
             @click="activeTab = tab"
           >
-            {{ tab }}
+            {{ tab.name }}
           </button>
         </div>
 
@@ -146,42 +127,42 @@ const filteredApplications = computed(() => {
         </button>
       </div>
 
-      <table class="services-table">
-        <thead>
-          <tr>
-            <th></th>
-            <th>Queue No.</th>
-            <th>Applicant Name</th>
-            <th>Disability Type</th>
-            <th>Service</th>
-            <th>Category</th>
-            <th>Date Applied</th>
-            <th>Files</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
+      <TableLoading :loading="loading" message="Loading services..." height="620px">
+        <v-table fixed-header height="620px" class="services-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Queue No.</th>
+              <th>Applicant Name</th>
+              <th>Service</th>
+              <th>Category</th>
+              <th>Date Applied</th>
+              <th>Files</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
 
-        <tbody>
-          <tr v-for="row in filteredApplications" :key="row.queue">
-            <td><input type="checkbox" /></td>
-            <td>{{ row.queue }}</td>
-            <td>{{ row.name }}</td>
-            <td>{{ row.disability }}</td>
-            <td>{{ row.service }}</td>
-            <td>{{ row.category }}</td>
-            <td>{{ row.date }}</td>
-            <td>
-              <span class="material-symbols-outlined file-icon">folder</span>
-            </td>
-            <td>
-              <button class="actions-btn">
-                {{ row.status }}
-                <span class="material-symbols-outlined">expand_more</span>
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+          <tbody>
+            <tr v-for="row in filteredApplications" :key="row.queue">
+              <td><input type="checkbox" /></td>
+              <td>{{ row.id }}</td>
+              <td>{{ row.applicant_name }}</td>
+              <td>{{ row.name }}</td>
+              <td>{{ row.category }}</td>
+              <td>{{ row.date_created }}</td>
+              <td>
+                <span class="material-symbols-outlined file-icon">folder</span>
+              </td>
+              <td>
+                <button class="actions-btn">
+                  {{ row.status }}
+                  <span class="material-symbols-outlined">expand_more</span>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </v-table>
+      </TableLoading>
     </div>
   </div>
 </template>
