@@ -143,7 +143,7 @@ onMounted(() => {
           </thead>
 
           <tbody>
-            <tr v-for="row in filteredApplications" :key="row.queue">
+            <tr v-for="row in filteredApplications" :key="row.id">
               <td><input type="checkbox" /></td>
               <td>{{ row.id }}</td>
               <td>{{ row.applicant_name }}</td>
