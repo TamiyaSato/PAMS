@@ -33,6 +33,8 @@ const newAppointment = reactive({
   preferred_date: null as Date | null,
   user_id: '',
   status: 'Scheduled' as 'Scheduled' | 'Completed' | 'Cancelled',
+  location: '',
+  notes: '',
 })
 
 const STATUS_MAP: Record<number, 'Scheduled' | 'Completed' | 'Cancelled'> = {
@@ -45,7 +47,6 @@ const appointments = ref<Appointment[]>([])
 const loading = ref(false)
 const selectedDate = ref<Date>(new Date())
 
-// --- Modal state ---
 const viewDialog = ref(false)
 const selectedAppointment = ref<NormalizedAppointment | null>(null)
 
@@ -69,6 +70,8 @@ function resetForm() {
   newAppointment.preferred_date = null
   newAppointment.user_id = ''
   newAppointment.status = 'Scheduled'
+  newAppointment.location = ''
+  newAppointment.notes = ''
 }
 
 async function fetchAppointments() {
@@ -150,33 +153,103 @@ function viewAppointment(a: NormalizedAppointment) {
 
 <template>
   <div class="page">
-    <v-dialog v-model="viewDialog" max-width="500">
+    <v-dialog v-model="viewDialog" max-width="600">
       <v-card v-if="selectedAppointment">
         <v-card-title>Appointment Details</v-card-title>
         <v-card-text>
-          <p><strong>Appointment ID:</strong> {{ selectedAppointment.id }}</p>
-          <p>
-            <strong>Applicant(s):</strong>
-            {{ selectedAppointment.applicant_name ?? `Applicant ${selectedAppointment.person_id}` }}
-          </p>
-          <p>
-            <strong>Service Type:</strong>
-            {{ selectedAppointment.service_name ?? `Service ${selectedAppointment.service_id}` }}
-          </p>
-          <p>
-            <strong>Date & Time:</strong> {{ formatDateTime(selectedAppointment.preferred_date) }}
-            {{ formatTime(selectedAppointment) }}
-          </p>
-          <p>
-            <strong>Assigned Staff:</strong>
-            {{ selectedAppointment.assigned_staff ?? `Staff ${selectedAppointment.user_id}` }}
-          </p>
-          <p><strong>Status:</strong> {{ selectedAppointment.status_text }}</p>
-          <p><strong>Location / Venue:</strong> {{ selectedAppointment.location ?? '—' }}</p>
-          <p>
-            <strong>Notes / Special Instructions:</strong> {{ selectedAppointment.notes ?? '—' }}
-          </p>
+          <v-row dense>
+            <v-col cols="12">
+              <v-text-field
+                label="Appointment ID"
+                :model-value="selectedAppointment.id"
+                readonly
+                variant="outlined"
+                persistent-placeholder
+              />
+            </v-col>
+
+            <v-col cols="12">
+              <v-text-field
+                label="Applicant(s)"
+                :model-value="
+                  selectedAppointment.applicant_name ?? `Applicant ${selectedAppointment.person_id}`
+                "
+                readonly
+                variant="outlined"
+                persistent-placeholder
+              />
+            </v-col>
+
+            <v-col cols="12">
+              <v-text-field
+                label="Service Type"
+                :model-value="
+                  selectedAppointment.service_name ?? `Service ${selectedAppointment.service_id}`
+                "
+                readonly
+                variant="outlined"
+                persistent-placeholder
+              />
+            </v-col>
+
+            <v-col cols="6">
+              <v-text-field
+                label="Date"
+                :model-value="formatDateTime(selectedAppointment.preferred_date)"
+                readonly
+                variant="outlined"
+                persistent-placeholder
+              />
+            </v-col>
+
+            <v-col cols="6">
+              <v-text-field label="Time" :value="formatTime(selectedAppointment)" readonly />
+            </v-col>
+
+            <v-col cols="12">
+              <v-text-field
+                label="Assigned Staff"
+                :model-value="
+                  selectedAppointment.assigned_staff ?? `Staff ${selectedAppointment.user_id}`
+                "
+                readonly
+                variant="outlined"
+                persistent-placeholder
+              />
+            </v-col>
+
+            <v-col cols="12">
+              <v-select
+                label=""
+                :items="['Scheduled', 'Completed', 'Cancelled']"
+                :value="selectedAppointment.status_text"
+                readonly
+              />
+            </v-col>
+
+            <v-col cols="12">
+              <v-text-field
+                label="Location / Venue"
+                :model-value="selectedAppointment.location ?? '—'"
+                readonly
+                variant="outlined"
+                persistent-placeholder
+              />
+            </v-col>
+
+            <v-col cols="12">
+              <v-textarea
+                label="Notes / Special Instructions"
+                :value="selectedAppointment.notes ?? '—'"
+                readonly
+                auto-grow
+              />
+            </v-col>
+          </v-row>
         </v-card-text>
+
+        <v-divider />
+
         <v-card-actions>
           <v-spacer />
           <v-btn variant="plain" @click="viewDialog = false">Close</v-btn>
@@ -243,11 +316,22 @@ function viewAppointment(a: NormalizedAppointment) {
                 </v-col>
 
                 <v-col cols="12">
-                  <v-select
-                    label="Status"
-                    :items="['Scheduled', 'Completed', 'Cancelled']"
-                    v-model="newAppointment.status"
-                  />
+                  <v-col cols="12">
+                    <v-text-field
+                      label="Location / Venue"
+                      v-model="newAppointment.location"
+                      variant="outlined"
+                    />
+                  </v-col>
+
+                  <v-col cols="12">
+                    <v-textarea
+                      label="Notes / Special Instructions"
+                      v-model="newAppointment.notes"
+                      auto-grow
+                      variant="outlined"
+                    />
+                  </v-col>
                 </v-col>
               </v-row>
             </v-card-text>
@@ -584,5 +668,9 @@ function viewAppointment(a: NormalizedAppointment) {
 .status-pill.cancelled {
   background: #fee2e2;
   color: #991b1b;
+}
+.wrap-text input {
+  white-space: normal !important;
+  overflow-wrap: break-word;
 }
 </style>
