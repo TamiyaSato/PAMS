@@ -118,21 +118,12 @@ async function saveEditService() {
   }
 }
 
-async function archiveService(service: serviceWithActions) {
+async function updateStatus(id: number, status: number) {
   try {
-    await api.patch(`/api/v1/service-types/${service.id}`, { active: 3 })
+    await api.patch(`/api/v1/service-types/${id}/status`, { status })
     await fetchServices()
   } catch (error) {
-    console.error('Error archiving service:', error)
-  }
-}
-
-async function deleteService(service: serviceWithActions) {
-  try {
-    await api.delete(`/api/v1/service-types/${service.id}`)
-    await fetchServices()
-  } catch (error) {
-    console.error('Error deleting service:', error)
+    console.error('Error updating status:', error)
   }
 }
 
@@ -246,10 +237,10 @@ onMounted(() => fetchServices())
                     <v-list-item @click="editServiceAction(service)">
                       <v-list-item-title>Edit</v-list-item-title>
                     </v-list-item>
-                    <v-list-item @click="archiveService(service)">
+                    <v-list-item @click="updateStatus(service.id, 3)">
                       <v-list-item-title>Archive</v-list-item-title>
                     </v-list-item>
-                    <v-list-item @click="deleteService(service)">
+                    <v-list-item @click="updateStatus(service.id, 2)">
                       <v-list-item-title>Draft</v-list-item-title>
                     </v-list-item>
                   </v-list>
