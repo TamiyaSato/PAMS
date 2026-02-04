@@ -140,6 +140,7 @@ onMounted(() => fetchAnnouncements())
               <v-text-field v-model="newAnnouncement.title" label="Title*" required />
               <v-text-field v-model="newAnnouncement.content" label="Summary*" required />
               <v-text-field v-model="newAnnouncement.posted_by" label="Posted By" />
+              <v-text-field v-model="newAnnouncement.category" label="Category" />
               <v-date-input v-model="newAnnouncement.date_posted" label="Post Date" />
             </v-card-text>
             <v-card-actions>
