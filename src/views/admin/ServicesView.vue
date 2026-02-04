@@ -250,7 +250,7 @@ onMounted(() => fetchServices())
                       <v-list-item-title>Archive</v-list-item-title>
                     </v-list-item>
                     <v-list-item @click="deleteService(service)">
-                      <v-list-item-title>Delete</v-list-item-title>
+                      <v-list-item-title>Draft</v-list-item-title>
                     </v-list-item>
                   </v-list>
                 </v-menu>

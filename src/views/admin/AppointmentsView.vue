@@ -14,6 +14,8 @@ interface Appointment {
   time_start?: string
   time_end?: string
   status: number
+  location?: string
+  notes?: string
   created_at?: string
 }
 
@@ -42,6 +44,10 @@ const STATUS_MAP: Record<number, 'Scheduled' | 'Completed' | 'Cancelled'> = {
 const appointments = ref<Appointment[]>([])
 const loading = ref(false)
 const selectedDate = ref<Date>(new Date())
+
+// --- Modal state ---
+const viewDialog = ref(false)
+const selectedAppointment = ref<NormalizedAppointment | null>(null)
 
 function formatDateTime(date: string) {
   const d = new Date(date)
@@ -108,11 +114,14 @@ async function saveAppointment() {
 const selectedDateISO = computed(() => selectedDate.value.toISOString().split('T')[0])
 
 const normalizedAppointments = computed<NormalizedAppointment[]>(() =>
-  appointments.value.map((a) => ({
-    ...a,
-    status_text: STATUS_MAP[a.status] ?? 'Scheduled',
-    date_only: a.preferred_date?.split('T')[0] ?? '',
-  })),
+  appointments.value.map((a) => {
+    const dateOnly = a.preferred_date ? a.preferred_date.split('T')[0] : ''
+    return {
+      ...a,
+      status_text: STATUS_MAP[a.status] ?? 'Scheduled',
+      date_only: dateOnly as string,
+    }
+  }),
 )
 
 const todaysAppointments = computed(() =>
@@ -132,11 +141,49 @@ const cancelledAppointments = computed(() =>
 )
 
 onMounted(fetchAppointments)
+
+function viewAppointment(a: NormalizedAppointment) {
+  selectedAppointment.value = a
+  viewDialog.value = true
+}
 </script>
 
 <template>
   <div class="page">
-    <!-- Header -->
+    <v-dialog v-model="viewDialog" max-width="500">
+      <v-card v-if="selectedAppointment">
+        <v-card-title>Appointment Details</v-card-title>
+        <v-card-text>
+          <p><strong>Appointment ID:</strong> {{ selectedAppointment.id }}</p>
+          <p>
+            <strong>Applicant(s):</strong>
+            {{ selectedAppointment.applicant_name ?? `Applicant ${selectedAppointment.person_id}` }}
+          </p>
+          <p>
+            <strong>Service Type:</strong>
+            {{ selectedAppointment.service_name ?? `Service ${selectedAppointment.service_id}` }}
+          </p>
+          <p>
+            <strong>Date & Time:</strong> {{ formatDateTime(selectedAppointment.preferred_date) }}
+            {{ formatTime(selectedAppointment) }}
+          </p>
+          <p>
+            <strong>Assigned Staff:</strong>
+            {{ selectedAppointment.assigned_staff ?? `Staff ${selectedAppointment.user_id}` }}
+          </p>
+          <p><strong>Status:</strong> {{ selectedAppointment.status_text }}</p>
+          <p><strong>Location / Venue:</strong> {{ selectedAppointment.location ?? '—' }}</p>
+          <p>
+            <strong>Notes / Special Instructions:</strong> {{ selectedAppointment.notes ?? '—' }}
+          </p>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="plain" @click="viewDialog = false">Close</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <div class="header">
       <div>
         <h2>Hi, Admin!</h2>
@@ -217,7 +264,6 @@ onMounted(fetchAppointments)
       </div>
     </div>
 
-    <!-- Stats -->
     <div class="stats">
       <div class="stat">
         <span>Today's Appointments</span>
@@ -237,7 +283,6 @@ onMounted(fetchAppointments)
       </div>
     </div>
 
-    <!-- Schedule -->
     <div class="schedule">
       <div class="calendar">
         <v-date-picker v-model="selectedDate" />
@@ -258,7 +303,6 @@ onMounted(fetchAppointments)
       </div>
     </div>
 
-    <!-- All Appointments (Scrollable) -->
     <div class="all-appointments">
       <div class="all-appointments-header">
         <h3>All Appointments</h3>
@@ -304,7 +348,7 @@ onMounted(fetchAppointments)
             }}</span>
           </div>
           <div class="cell action">
-            <button class="pill blue small">View</button>
+            <button class="pill blue small" @click="viewAppointment(a)">View</button>
           </div>
         </div>
       </div>
@@ -435,7 +479,6 @@ onMounted(fetchAppointments)
   color: white;
 }
 
-/* Scrollable All Appointments */
 .all-appointments {
   background: white;
   border-radius: 16px;

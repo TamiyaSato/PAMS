@@ -222,7 +222,7 @@ function resetSettings() {
 
 .preview.focus-highlight button,
 .preview.focus-highlight input {
-  outline: 3px solid red;
+  outline: 3px solid rgb(255, 4, 4);
 }
 
 .preview-controls {
