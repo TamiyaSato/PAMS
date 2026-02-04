@@ -9,6 +9,7 @@ export const useAuthStore = defineStore('auth', () => {
   function checkAuth() {
     const token = localStorage.getItem('authToken')
     isAuthenticated.value = !!token
+    user.value = decodeJwtManually(token as string)
 
     return isAuthenticated.value
   }

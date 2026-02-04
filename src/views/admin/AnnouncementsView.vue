@@ -8,6 +8,7 @@ const tabs = ['All Announcements', 'Posted', 'Scheduled', 'Draft', 'Archived']
 const activeTab = ref('All Announcements')
 
 const authStore = useAuthStore()
+authStore.checkAuth()
 type announcementWithActions = announcementResponse & { showActions: boolean }
 
 const announcements = ref<announcementWithActions[]>([])

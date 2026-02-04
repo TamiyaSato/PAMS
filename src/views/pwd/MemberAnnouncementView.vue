@@ -1,10 +1,45 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import catto from '../../assets/catto.jpg'
+import api from '@/api/axios'
+import type { announcementResponse } from '@/models/announcementResponse'
 
 type AnnouncementTab = 'All Updates' | 'Services' | 'Community News' | 'Urgent Alerts'
 
 const activeTab = ref<AnnouncementTab>('All Updates')
+const loading = ref(false)
+const announcements = ref<announcementResponse[]>([])
+
+const filteredAnnouncements = computed(() => {
+  switch (activeTab.value) {
+    case 'Urgent Alerts':
+      return announcements.value.filter((a) => a.category === 1)
+    case 'Community News':
+      return announcements.value.filter((a) => a.category === 2)
+    case 'Services':
+      return announcements.value.filter((a) => a.category === 3)
+    case 'All Updates':
+    default:
+      return announcements.value
+  }
+})
+
+async function fetchAnnouncements() {
+  loading.value = true
+  try {
+    const response = await api.get<announcementResponse[]>('/api/v1/announcements?status=1')
+    announcements.value = response.data.map((a) => ({
+      ...a,
+      date_posted: a.date_posted ? a.date_posted.split('T')[0] : '',
+    }))
+  } catch (error) {
+    console.error('Error fetching announcements:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => fetchAnnouncements())
 </script>
 
 <template>
@@ -42,27 +77,23 @@ const activeTab = ref<AnnouncementTab>('All Updates')
 
       <v-divider class="my-4" />
 
-      <div class="announcement-card">
-        <span class="urgent-pill">Urgent</span>
+      <div
+        class="announcement-card"
+        v-for="announcement in filteredAnnouncements"
+        :key="announcement.id"
+      >
+        <div class="urgent-pill" v-if="announcement.category === 1">Urgent</div>
 
         <div class="announcement-content">
-          <h4>Barangay Hall Closed For Renovation</h4>
+          <h4>{{ announcement.title }}</h4>
 
-          <p class="meta">
-            Posted: January 22, 2026<br />
-            Category: Urgent Alert
-          </p>
+          <p class="meta">Posted: {{ announcement.date_posted }}</p>
 
           <p class="description">
-            Please be advised that the Barangay Hall will be temporarily closed starting February
-            15, 2026 until March 15, 2026 due to scheduled renovation works aimed at improving
-            facilities and accessibility for all residents.
-            <strong class="read-more">[READ FULL ANNOUNCEMENT]</strong>
+            {{ announcement.content }}
           </p>
         </div>
       </div>
-
-      <div class="empty-space" />
     </div>
   </v-container>
 </template>
@@ -152,6 +183,7 @@ const activeTab = ref<AnnouncementTab>('All Updates')
   padding: 16px;
   display: flex;
   gap: 14px;
+  margin-bottom: 16px;
 }
 
 .urgent-pill {
