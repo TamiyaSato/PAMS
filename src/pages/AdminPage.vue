@@ -80,7 +80,7 @@ watch(
         <v-list-item
           to="/admin/appointments"
           prepend-icon="event"
-          title="Appointments"
+          title="Appointments & Schedule"
           class="menu-item"
         />
       </v-list>
