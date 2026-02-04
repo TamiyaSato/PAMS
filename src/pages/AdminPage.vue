@@ -21,35 +21,77 @@ const handleLogout = () => {
 watch(
   () => authStore.isAuthenticated,
   (isAuth) => {
-    if (!isAuth) {
-      logoutDialog.value = false
-    }
+    if (!isAuth) logoutDialog.value = false
   },
 )
 </script>
 
 <template>
   <v-layout>
-    <v-navigation-drawer expand-on-hover permanent rail color="#0a1551">
+    <v-navigation-drawer
+      permanent
+      rail
+      expand-on-hover
+      width="280"
+      rail-width="72"
+      class="admin-drawer"
+    >
       <div class="logo-section">
         <img :src="pamsLogo" alt="PAMS Logo" class="logo-image" />
       </div>
-      <v-list> </v-list>
 
-      <v-divider />
+      <v-list nav class="menu-list">
+        <v-list-item
+          to="/admin"
+          prepend-icon="dashboard"
+          title="Dashboard"
+          exact
+          class="menu-item"
+        />
 
-      <v-list density="compact" nav>
-        <v-list-item prepend-icon="dashboard" title="Dashboard" to="/admin" />
-        <v-list-item prepend-icon="inventory_2" title="Services" to="/admin/services" />
-        <v-list-item prepend-icon="description" title="Applications" to="/admin/applications" />
-        <v-list-item prepend-icon="campaign" title="Announcements" to="/admin/announcements" />
-        <v-list-item prepend-icon="bar_chart" title="Activity Logs" to="/admin/activity-logs" />
-        <v-list-item prepend-icon="event" title="Appointments" to="/admin/appointments" />
-        <v-spacer />
+        <v-list-item
+          to="/admin/services"
+          prepend-icon="inventory_2"
+          title="Services"
+          class="menu-item"
+        />
+
+        <v-list-item
+          to="/admin/applications"
+          prepend-icon="description"
+          title="Applications"
+          class="menu-item"
+        />
+
+        <v-list-item
+          to="/admin/announcements"
+          prepend-icon="campaign"
+          title="Announcements"
+          class="menu-item"
+        />
+
+        <v-list-item
+          to="/admin/activity-logs"
+          prepend-icon="bar_chart"
+          title="Activity Logs"
+          class="menu-item"
+        />
+
+        <v-list-item
+          to="/admin/appointments"
+          prepend-icon="event"
+          title="Appointments & Schedule"
+          class="menu-item"
+        />
       </v-list>
 
-      <v-list density="compact" nav class="pb-2">
-        <v-list-item prepend-icon="mdilogout" title="Logout" @click="logoutDialog = true" />
+      <v-list class="logout-list">
+        <v-list-item
+          prepend-icon="logout"
+          title="Logout"
+          class="logout-item"
+          @click="logoutDialog = true"
+        />
       </v-list>
     </v-navigation-drawer>
 
@@ -58,64 +100,65 @@ watch(
 
       <v-dialog v-if="isAuthenticated" v-model="logoutDialog" max-width="420" persistent>
         <v-card class="logout-card">
-          <v-card-title class="logout-title"> Confirm Logout </v-card-title>
-
+          <v-card-title class="logout-title">Confirm Logout</v-card-title>
           <v-card-text class="logout-text"> Are you sure you want to log out? </v-card-text>
 
           <v-card-actions class="logout-actions">
             <div class="logout-btn-wrapper">
-              <v-btn class="btn-no" @click="logoutDialog = false"> NO </v-btn>
-              <v-btn class="btn-yes" @click="handleLogout"> YES </v-btn>
+              <v-btn class="btn-no" @click="logoutDialog = false">NO</v-btn>
+              <v-btn class="btn-yes" @click="handleLogout">YES</v-btn>
             </div>
           </v-card-actions>
         </v-card>
       </v-dialog>
+
       <RouterView />
     </v-main>
   </v-layout>
 </template>
 
 <style scoped>
-:deep(.v-navigation-drawer) {
+.admin-drawer {
+  background: #0a1551;
   font-family: 'Inter', sans-serif;
 }
 
-:deep(.v-list-item-title),
-:deep(.v-list-item-subtitle),
-:deep(.v-icon) {
-  color: #ffffff !important;
+.logo-section {
+  display: flex;
+  justify-content: center;
+  padding: 22px 20px;
 }
 
-:deep(.v-list-item-title) {
-  font-size: 15px;
-  font-weight: 500;
-  letter-spacing: 0.1px;
+.logo-image {
+  width: 120px;
+  height: auto;
+  object-fit: contain;
 }
 
-:deep(.v-list-item .v-icon) {
-  font-size: 20px;
+.menu-list {
+  padding-top: 6px;
 }
 
-:deep(.v-list-item) {
-  margin: 6px 10px;
-  padding: 10px;
+.menu-item {
+  margin: 4px 12px;
+  border-radius: 10px;
+  color: #ffffff;
 }
 
-:deep(.v-navigation-drawer--rail .v-list-item) {
-  justify-content: flex-start;
-  padding-left: 14px !important;
+:deep(.menu-item .v-icon) {
+  color: #ffffff;
+}
+
+:deep(.menu-item.v-list-item--active) {
+  background: rgba(255, 255, 255, 0.12);
 }
 
 :deep(.v-navigation-drawer--rail .v-icon) {
-  transform: translateX(-11px);
-}
-:deep(.v-navigation-drawer--rail) .logo-image {
-  width: 100px;
-  height: 100px;
+  transform: translateX(-5px);
 }
 
 .logout-item {
-  color: #cfd8dc;
+  color: #ffffff;
 }
 
 .logout-card {
@@ -127,14 +170,12 @@ watch(
   text-align: center;
   font-weight: 700;
   font-size: 18px;
-  padding-bottom: 6px;
 }
 
 .logout-text {
   text-align: center;
   font-size: 14px;
   color: #666;
-  margin-top: 4px;
 }
 
 .logout-actions {
@@ -144,10 +185,7 @@ watch(
 
 .logout-btn-wrapper {
   display: flex;
-  justify-content: center;
-  align-items: center;
   gap: 16px;
-  width: 100%;
 }
 
 .btn-no {
@@ -166,30 +204,5 @@ watch(
   min-width: 90px;
   height: 36px;
   font-weight: 600;
-}
-
-.logo-section {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 16px;
-}
-:deep(.v-navigation-drawer--rail) .logo-section {
-  padding: 10px;
-}
-
-.logo-image {
-  width: 200px;
-  height: 200px;
-  object-fit: contain;
-}
-
-:deep(.logout-item.v-list-item) {
-  margin: 6px 10px;
-  padding: 10px;
-}
-:deep(.logout-item) {
-  width: calc(100% - 20px);
-  transform: translateX(-11px);
 }
 </style>
