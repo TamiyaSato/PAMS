@@ -43,7 +43,7 @@ const filteredApplications = computed(() => {
 
 async function updateStatus(id: number, status: number) {
   try {
-    await api.patch(`/api/v1/transactions/${id}`, { status })
+    await api.patch(`/api/v1/transactions/${id}/status`, { status })
     await fetchApplications()
   } catch (e) {
     console.error('Failed to update status:', e)
