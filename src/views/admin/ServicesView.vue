@@ -4,29 +4,17 @@ import { onMounted, ref, computed, watch } from 'vue'
 import type { serviceResponse } from '@/models/serviceResponse'
 import TableLoading from '@/components/TableLoading.vue'
 
-const dialog = ref(false)
+type serviceWithActions = serviceResponse & { showActions: boolean }
+
 const tabs = ['All', 'Active', 'Drafts', 'Archived']
 const activeTab = ref('All')
-const services = ref<serviceResponse[]>([])
+const services = ref<serviceWithActions[]>([])
 const loading = ref(false)
+const searchQuery = ref('')
 
-function getStatus(s: serviceResponse) {
-  return s.active ?? 0
-}
-
-const filteredServices = computed(() => {
-  const all = services.value || []
-  const tab = activeTab.value
-
-  if (tab === 'All') return all
-  if (tab === 'Active') return all.filter((s) => getStatus(s) === 1)
-  if (tab === 'Drafts') return all.filter((s) => getStatus(s) === 2)
-  if (tab === 'Archived') return all.filter((s) => getStatus(s) === 3)
-
-  return all
-})
-
-const newService = ref<Partial<serviceResponse>>({
+const newDialog = ref(false)
+const editDialog = ref(false)
+const newService = ref<Partial<serviceWithActions>>({
   name: '',
   description: '',
   requirements: '',
@@ -34,28 +22,63 @@ const newService = ref<Partial<serviceResponse>>({
   active: 1,
   date_created: '',
 })
+const editServiceData = ref<Partial<serviceWithActions>>({})
 
-async function saveService() {
+function getStatus(s: serviceWithActions) {
+  return s.active ?? 0
+}
+
+const filteredServices = computed(() => {
+  let list = services.value
+
+  if (activeTab.value === 'Active') list = list.filter((s) => getStatus(s) === 1)
+  else if (activeTab.value === 'Drafts') list = list.filter((s) => getStatus(s) === 2)
+  else if (activeTab.value === 'Archived') list = list.filter((s) => getStatus(s) === 3)
+
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.toLowerCase()
+    list = list.filter(
+      (s) =>
+        s.name?.toLowerCase().includes(q) ||
+        s.description?.toLowerCase().includes(q) ||
+        s.category?.toLowerCase().includes(q),
+    )
+  }
+
+  return list
+})
+
+async function fetchServices() {
+  loading.value = true
   try {
-    // prepare payload (strip undefined fields)
-    const dateCreated = newService.value.date_created
-      ? new Date(newService.value.date_created).toISOString().split('T')[0]
-      : ''
+    const response = await api.get<serviceResponse[]>('/api/v1/service-types')
+    services.value = response.data.map((service) => ({
+      ...service,
+      date_created: service.date_created ? service.date_created.split('T')[0] : '',
+      showActions: false,
+    })) as serviceWithActions[]
+  } catch (error) {
+    console.error('Error fetching services:', error)
+  } finally {
+    loading.value = false
+  }
+}
 
+async function saveNewService() {
+  try {
     const payload: unknown = {
       name: newService.value.name,
       description: newService.value.description,
       requirements: newService.value.requirements,
       category: newService.value.category,
       active: newService.value.active,
-      date_created: dateCreated,
+      date_created: newService.value.date_created
+        ? new Date(newService.value.date_created).toISOString().split('T')[0]
+        : '',
     }
-
     await api.post('/api/v1/service-types', payload)
-    dialog.value = false
-    // refresh list
+    newDialog.value = false
     await fetchServices()
-    // reset form
     newService.value = {
       name: '',
       description: '',
@@ -69,9 +92,52 @@ async function saveService() {
   }
 }
 
-watch(dialog, (val) => {
-  if (val) {
-    // reset form whenever dialog opens
+function editServiceAction(service: serviceWithActions) {
+  editServiceData.value = { ...service }
+  editDialog.value = true
+}
+
+async function saveEditService() {
+  if (!editServiceData.value.id) return
+  try {
+    const payload: unknown = {
+      name: editServiceData.value.name,
+      description: editServiceData.value.description,
+      requirements: editServiceData.value.requirements,
+      category: editServiceData.value.category,
+      active: editServiceData.value.active,
+      date_created: editServiceData.value.date_created
+        ? new Date(editServiceData.value.date_created).toISOString().split('T')[0]
+        : '',
+    }
+    await api.put(`/api/v1/service-types/${editServiceData.value.id}`, payload)
+    editDialog.value = false
+    await fetchServices()
+  } catch (error) {
+    console.error('Error editing service:', error)
+  }
+}
+
+async function archiveService(service: serviceWithActions) {
+  try {
+    await api.patch(`/api/v1/service-types/${service.id}`, { active: 3 })
+    await fetchServices()
+  } catch (error) {
+    console.error('Error archiving service:', error)
+  }
+}
+
+async function deleteService(service: serviceWithActions) {
+  try {
+    await api.delete(`/api/v1/service-types/${service.id}`)
+    await fetchServices()
+  } catch (error) {
+    console.error('Error deleting service:', error)
+  }
+}
+
+watch(newDialog, (val) => {
+  if (val)
     newService.value = {
       name: '',
       description: '',
@@ -80,28 +146,9 @@ watch(dialog, (val) => {
       active: 1,
       date_created: '',
     }
-  }
 })
 
-async function fetchServices() {
-  loading.value = true
-  try {
-    const response = await api.get<serviceResponse[]>('/api/v1/service-types')
-    // trim date_created to YYYY-MM-DD format
-    services.value = response.data.map((service) => ({
-      ...service,
-      date_created: service.date_created ? service.date_created.split('T')[0] : '',
-    })) as serviceResponse[]
-  } catch (error) {
-    console.error('Error fetching services:', error)
-  } finally {
-    loading.value = false
-  }
-}
-
-onMounted(() => {
-  fetchServices()
-})
+onMounted(() => fetchServices())
 </script>
 
 <template>
@@ -118,99 +165,34 @@ onMounted(() => {
       <div class="top-actions">
         <div class="search-box">
           <span class="material-symbols-outlined">search</span>
-          <input type="text" placeholder="Search services" />
+          <input type="text" placeholder="Search services" v-model="searchQuery" />
         </div>
 
-        <button class="pill dark">
-          Category
-          <span class="material-symbols-outlined">expand_more</span>
-        </button>
-
-        <button class="pill dark">
-          Year
-          <span class="material-symbols-outlined">calendar_month</span>
-        </button>
-
-        <v-dialog v-model="dialog" max-width="600">
+        <v-dialog v-model="newDialog" max-width="600">
           <template v-slot:activator="{ props: activatorProps }">
             <button class="pill yellow" v-bind="activatorProps">
               <span class="material-symbols-outlined">add</span>
               New Service
             </button>
           </template>
-
-          <v-card prepend-icon="mdi-account" title="Service Details">
+          <v-card title="New Service">
             <v-card-text>
-              <v-row dense>
-                <v-col cols="12">
-                  <v-text-field v-model="newService.name" label="Service Name*" required />
-                </v-col>
-
-                <v-col cols="12">
-                  <v-text-field v-model="newService.description" label=" Description*" required />
-                </v-col>
-
-                <v-col cols="12">
-                  <v-autocomplete
-                    v-model="newService.category"
-                    :items="['Financial', 'Goods', 'Training', 'Medical']"
-                    label="Category"
-                    auto-select-first
-                  />
-                </v-col>
-
-                <v-col cols="12">
-                  <v-text-field v-model="newService.requirements" label=" Requirements*" required />
-                </v-col>
-
-                <v-col cols="12">
-                  <v-date-input
-                    v-model="newService.date_created"
-                    label="Cut-Off Date"
-                  ></v-date-input>
-                </v-col>
-              </v-row>
-
-              <small class="text-caption text-medium-emphasis">*indicates required field</small>
+              <v-text-field v-model="newService.name" label="Service Name*" required />
+              <v-text-field v-model="newService.description" label="Description*" required />
+              <v-autocomplete
+                v-model="newService.category"
+                :items="['Financial', 'Goods', 'Training', 'Medical']"
+                label="Category"
+              />
+              <v-text-field v-model="newService.requirements" label="Requirements*" required />
+              <v-date-input v-model="newService.date_created" label="Cut-Off Date" />
             </v-card-text>
-
-            <v-divider />
-
             <v-card-actions>
-              <v-spacer />
-
-              <v-btn variant="plain" @click="dialog = false"> Close </v-btn>
-
-              <v-btn color="primary" variant="tonal" @click="saveService"> Save </v-btn>
+              <v-btn @click="newDialog = false">Close</v-btn>
+              <v-btn color="primary" @click="saveNewService">Save</v-btn>
             </v-card-actions>
           </v-card>
         </v-dialog>
-      </div>
-    </div>
-
-    <div class="stats">
-      <div class="stat-card">
-        <div class="stat-left">
-          <span class="material-symbols-outlined">check_circle</span>
-          <span>Active Services</span>
-        </div>
-        <div class="count">04</div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-left">
-          <span class="material-symbols-outlined">monitoring</span>
-          <span>Total Remaining Slots</span>
-        </div>
-        <div class="count">16</div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-left">
-          <span class="material-symbols-outlined">hourglass_top</span>
-          <span>Closing soon</span>
-        </div>
-        <div class="count">02</div>
       </div>
     </div>
 
@@ -227,30 +209,22 @@ onMounted(() => {
             {{ tab }}
           </button>
         </div>
-
-        <button class="export-btn">
-          <span class="material-symbols-outlined">ios_share</span>
-          Export
-        </button>
       </div>
 
-      <v-divider></v-divider>
-
-      <TableLoading :loading="loading" message="Loading services..." height="480px">
-        <v-table class="services-table" height="480px" fixed-header>
+      <TableLoading :loading="loading" message="Loading services..." height="620px">
+        <v-table class="services-table" height="620px" fixed-header>
           <thead>
             <tr>
               <th></th>
               <th>ID</th>
-              <th>Service Name</th>
+              <th>Name</th>
               <th>Description</th>
               <th>Category</th>
               <th>Requirements</th>
-              <th>Cut-Off Date</th>
+              <th>Cut-Off</th>
               <th>Actions</th>
             </tr>
           </thead>
-
           <tbody>
             <tr v-for="service in filteredServices" :key="service.id">
               <td><input type="checkbox" /></td>
@@ -261,16 +235,51 @@ onMounted(() => {
               <td>{{ service.requirements }}</td>
               <td>{{ service.date_created }}</td>
               <td>
-                <button class="actions-btn">
-                  Actions
-                  <span class="material-symbols-outlined">expand_more</span>
-                </button>
+                <v-menu v-model="service.showActions" offset-y>
+                  <template v-slot:activator="{ props: activatorProps }">
+                    <button class="actions-btn" v-bind="activatorProps">
+                      Actions
+                      <span class="material-symbols-outlined">expand_more</span>
+                    </button>
+                  </template>
+                  <v-list>
+                    <v-list-item @click="editServiceAction(service)">
+                      <v-list-item-title>Edit</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item @click="archiveService(service)">
+                      <v-list-item-title>Archive</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item @click="deleteService(service)">
+                      <v-list-item-title>Delete</v-list-item-title>
+                    </v-list-item>
+                  </v-list>
+                </v-menu>
               </td>
             </tr>
           </tbody>
         </v-table>
       </TableLoading>
     </div>
+
+    <v-dialog v-model="editDialog" max-width="600">
+      <v-card title="Edit Service">
+        <v-card-text>
+          <v-text-field v-model="editServiceData.name" label="Service Name*" required />
+          <v-text-field v-model="editServiceData.description" label="Description*" required />
+          <v-autocomplete
+            v-model="editServiceData.category"
+            :items="['Financial', 'Goods', 'Training', 'Medical']"
+            label="Category"
+          />
+          <v-text-field v-model="editServiceData.requirements" label="Requirements*" required />
+          <v-date-input v-model="editServiceData.date_created" label="Cut-Off Date" />
+        </v-card-text>
+        <v-card-actions>
+          <v-btn @click="editDialog = false">Close</v-btn>
+          <v-btn color="primary" @click="saveEditService">Save</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 

@@ -136,12 +136,13 @@ onMounted(fetchAppointments)
 
 <template>
   <div class="page">
+    <!-- Header -->
     <div class="header">
       <div>
         <h2>Hi, Admin!</h2>
-        <p class="meta">
-          Logged in as: <span class="link">[Admin]</span> <span class="link">[Role]</span><br />
-          Last login: [date, time]
+        <p>
+          <a href="#">Logged in as: [Admin] [Role]</a><br />
+          <a href="#">Last login: [date, time]</a>
         </p>
       </div>
 
@@ -216,6 +217,7 @@ onMounted(fetchAppointments)
       </div>
     </div>
 
+    <!-- Stats -->
     <div class="stats">
       <div class="stat">
         <span>Today's Appointments</span>
@@ -235,6 +237,7 @@ onMounted(fetchAppointments)
       </div>
     </div>
 
+    <!-- Schedule -->
     <div class="schedule">
       <div class="calendar">
         <v-date-picker v-model="selectedDate" />
@@ -255,6 +258,7 @@ onMounted(fetchAppointments)
       </div>
     </div>
 
+    <!-- All Appointments (Scrollable) -->
     <div class="all-appointments">
       <div class="all-appointments-header">
         <h3>All Appointments</h3>
@@ -272,7 +276,7 @@ onMounted(fetchAppointments)
         </div>
       </div>
 
-      <div class="appointments-columns">
+      <div class="appointments-columns sticky-header">
         <div></div>
         <div>Appointment ID</div>
         <div>Applicant/s</div>
@@ -283,38 +287,25 @@ onMounted(fetchAppointments)
         <div></div>
       </div>
 
-      <div v-for="a in normalizedAppointments" :key="a.id" class="appointment-row">
-        <div class="cell check">
-          <input type="checkbox" />
-        </div>
-
-        <div class="cell id">{{ a.id }}</div>
-
-        <div class="cell applicant">
-          {{ a.applicant_name ?? `Applicant ${a.person_id}` }}
-        </div>
-
-        <div class="cell service">
-          {{ a.service_name ?? `Service ${a.service_id}` }}
-        </div>
-
-        <div class="cell datetime">
-          {{ formatDateTime(a.preferred_date) }}
-          <div class="time">{{ formatTime(a) }}</div>
-        </div>
-
-        <div class="cell staff">
-          {{ a.assigned_staff ?? `Staff ${a.user_id}` }}
-        </div>
-
-        <div class="cell status">
-          <span class="status-pill" :class="a.status_text.toLowerCase()">
-            {{ a.status_text }}
-          </span>
-        </div>
-
-        <div class="cell action">
-          <button class="pill blue small">View</button>
+      <div class="appointments-scroll">
+        <div v-for="a in normalizedAppointments" :key="a.id" class="appointment-row">
+          <div class="cell check"><input type="checkbox" /></div>
+          <div class="cell id">{{ a.id }}</div>
+          <div class="cell applicant">{{ a.applicant_name ?? `Applicant ${a.person_id}` }}</div>
+          <div class="cell service">{{ a.service_name ?? `Service ${a.service_id}` }}</div>
+          <div class="cell datetime">
+            {{ formatDateTime(a.preferred_date) }}
+            <div class="time">{{ formatTime(a) }}</div>
+          </div>
+          <div class="cell staff">{{ a.assigned_staff ?? `Staff ${a.user_id}` }}</div>
+          <div class="cell status">
+            <span class="status-pill" :class="a.status_text.toLowerCase()">{{
+              a.status_text
+            }}</span>
+          </div>
+          <div class="cell action">
+            <button class="pill blue small">View</button>
+          </div>
         </div>
       </div>
     </div>
@@ -444,25 +435,14 @@ onMounted(fetchAppointments)
   color: white;
 }
 
+/* Scrollable All Appointments */
 .all-appointments {
   background: white;
   border-radius: 16px;
   padding: 16px;
 }
 
-.all-appointments-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.all-appointments-header h3 {
-  margin: 0;
-  font-weight: 700;
-}
-
-.appointments-columns {
+.sticky-header {
   display: grid;
   grid-template-columns:
     32px
@@ -477,7 +457,30 @@ onMounted(fetchAppointments)
   font-size: 0.85rem;
   font-weight: 600;
   color: #374151;
-  margin-bottom: 8px;
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 5;
+  border-bottom: 1px solid #d1d5db;
+}
+
+.appointments-scroll {
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.appointments-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.appointments-scroll::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.appointments-scroll::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .appointment-row {
@@ -490,7 +493,7 @@ onMounted(fetchAppointments)
     220px
     180px
     140px
-    100px;
+    140px;
   align-items: center;
   background: #eef5f9;
   border-radius: 14px;

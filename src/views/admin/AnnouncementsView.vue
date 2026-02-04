@@ -7,11 +7,13 @@ const dialog = ref(false)
 const tabs = ['All Announcements', 'Posted', 'Scheduled', 'Draft', 'Archived']
 const activeTab = ref('All Announcements')
 
-const announcements = ref<announcementResponse[]>([])
+type announcementWithActions = announcementResponse & { showActions: boolean }
+
+const announcements = ref<announcementWithActions[]>([])
 const loading = ref(false)
 
-function getStatus(a: announcementResponse) {
-  return a.active ?? 0
+function getStatus(a: announcementWithActions) {
+  return a.active ?? a.status ?? 0
 }
 
 const filteredAnnouncements = computed(() => {
@@ -33,7 +35,6 @@ const filteredAnnouncements = computed(() => {
 const newAnnouncement = ref<Partial<announcementResponse>>({
   title: '',
   content: '',
-
   posted_by: 0,
   status: 1,
   date_posted: '',
@@ -44,10 +45,10 @@ async function saveAnnouncement() {
     const dateCreated = newAnnouncement.value.date_posted
       ? new Date(newAnnouncement.value.date_posted).toISOString().split('T')[0]
       : ''
+
     const payload: Partial<announcementResponse> = {
       title: newAnnouncement.value.title,
       content: newAnnouncement.value.content,
-
       posted_by: newAnnouncement.value.posted_by,
       status: newAnnouncement.value.status,
       date_posted: dateCreated,
@@ -60,7 +61,6 @@ async function saveAnnouncement() {
     newAnnouncement.value = {
       title: '',
       content: '',
-
       posted_by: 0,
       status: 1,
       date_posted: '',
@@ -75,7 +75,6 @@ watch(dialog, (val) => {
     newAnnouncement.value = {
       title: '',
       content: '',
-
       posted_by: 0,
       status: 1,
       date_posted: '',
@@ -90,6 +89,7 @@ async function fetchAnnouncements() {
     announcements.value = response.data.map((a) => ({
       ...a,
       posted_date: a.date_posted ? a.date_posted.split('T')[0] : '',
+      showActions: false,
     }))
   } catch (error) {
     console.error('Error fetching announcements:', error)
@@ -98,17 +98,19 @@ async function fetchAnnouncements() {
   }
 }
 
-onMounted(() => {
-  fetchAnnouncements()
-})
+async function updateAnnouncementStatus(id: number, status: number) {
+  try {
+    await api.put(`/api/v1/announcements/${id}`, { status })
+    await fetchAnnouncements()
+  } catch (error) {
+    console.error('Failed to update announcement status:', error)
+  }
+}
+
+onMounted(() => fetchAnnouncements())
 </script>
 
 <template>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
-    rel="stylesheet"
-  />
-
   <div class="announcements-view">
     <div class="top-header">
       <div class="welcome">
@@ -135,62 +137,17 @@ onMounted(() => {
 
           <v-card title="Announcement Details">
             <v-card-text>
-              <v-row dense>
-                <v-col cols="12">
-                  <v-text-field v-model="newAnnouncement.title" label="Title*" required />
-                </v-col>
-
-                <v-col cols="12">
-                  <v-text-field v-model="newAnnouncement.content" label="Summary*" required />
-                </v-col>
-
-                <v-col cols="12">
-                  <v-text-field v-model="newAnnouncement.posted_by" label="Posted By" />
-                </v-col>
-
-                <v-col cols="12">
-                  <v-date-input v-model="newAnnouncement.date_posted" label="Post Date" />
-                </v-col>
-              </v-row>
-
-              <small class="text-caption text-medium-emphasis"> * indicates required field </small>
+              <v-text-field v-model="newAnnouncement.title" label="Title*" required />
+              <v-text-field v-model="newAnnouncement.content" label="Summary*" required />
+              <v-text-field v-model="newAnnouncement.posted_by" label="Posted By" />
+              <v-date-input v-model="newAnnouncement.date_posted" label="Post Date" />
             </v-card-text>
-
-            <v-divider />
-
             <v-card-actions>
-              <v-spacer />
-              <v-btn variant="plain" @click="dialog = false">Close</v-btn>
-              <v-btn color="primary" variant="tonal" @click="saveAnnouncement"> Save </v-btn>
+              <v-btn @click="dialog = false">Close</v-btn>
+              <v-btn color="primary" @click="saveAnnouncement">Save</v-btn>
             </v-card-actions>
           </v-card>
         </v-dialog>
-      </div>
-    </div>
-
-    <div class="stats">
-      <div class="stat-card blue">
-        <div class="stat-left">
-          <span class="material-symbols-outlined">mail</span>
-          <span>Active Announcements</span>
-        </div>
-        <div class="count yellow">14</div>
-      </div>
-
-      <div class="stat-card blue">
-        <div class="stat-left">
-          <span class="material-symbols-outlined">edit</span>
-          <span>Posted this week</span>
-        </div>
-        <div class="count yellow">09</div>
-      </div>
-
-      <div class="stat-card blue">
-        <div class="stat-left">
-          <span class="material-symbols-outlined">schedule</span>
-          <span>Scheduled Updates</span>
-        </div>
-        <div class="count yellow">03</div>
       </div>
     </div>
 
@@ -207,14 +164,6 @@ onMounted(() => {
             {{ tab }}
           </button>
         </div>
-
-        <div class="table-actions">
-          <span class="material-symbols-outlined filter">filter_alt</span>
-          <button class="export-btn">
-            <span class="material-symbols-outlined">ios_share</span>
-            Export
-          </button>
-        </div>
       </div>
 
       <table class="announcements-table">
@@ -224,7 +173,6 @@ onMounted(() => {
             <th>Announcement ID</th>
             <th>Title</th>
             <th>Summary</th>
-
             <th>Posted By</th>
             <th>Posted Date</th>
             <th>Status</th>
@@ -238,23 +186,39 @@ onMounted(() => {
             <td>{{ row.id }}</td>
             <td>{{ row.title }}</td>
             <td>{{ row.content }}</td>
-
             <td>{{ row.full_name }}</td>
             <td>{{ row.date_posted }}</td>
             <td>
               <span class="status-pill">{{ row.status }}</span>
             </td>
             <td>
-              <button class="actions-btn">
-                Actions
-                <span class="material-symbols-outlined">expand_more</span>
-              </button>
+              <v-menu v-model="row.showActions" offset-y>
+                <template v-slot:activator="{ props: activatorProps }">
+                  <button class="actions-btn" v-bind="activatorProps">
+                    Actions
+                    <span class="material-symbols-outlined">expand_more</span>
+                  </button>
+                </template>
+
+                <v-list>
+                  <v-list-item @click="updateAnnouncementStatus(row.id!, 1)">
+                    <v-list-item-title>Post</v-list-item-title>
+                  </v-list-item>
+                  <v-list-item @click="updateAnnouncementStatus(row.id!, 2)">
+                    <v-list-item-title>Schedule</v-list-item-title>
+                  </v-list-item>
+                  <v-list-item @click="updateAnnouncementStatus(row.id!, 3)">
+                    <v-list-item-title>Draft</v-list-item-title>
+                  </v-list-item>
+                  <v-list-item @click="updateAnnouncementStatus(row.id!, 4)">
+                    <v-list-item-title>Archive</v-list-item-title>
+                  </v-list-item>
+                </v-list>
+              </v-menu>
             </td>
           </tr>
         </tbody>
       </table>
-
-      <div class="show-all">Show All</div>
     </div>
   </div>
 </template>
@@ -305,34 +269,6 @@ onMounted(() => {
   background: #ffbf00;
 }
 
-.stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
-.stat-card {
-  background: #0b1b5a;
-  color: white;
-  border-radius: 14px;
-  padding: 16px;
-  display: flex;
-  justify-content: space-between;
-}
-
-.count {
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.count.yellow {
-  background: #ffbf00;
-  color: #0b1b5a;
-  padding: 6px 14px;
-  border-radius: 999px;
-}
-
 .table-card {
   background: white;
   border-radius: 14px;
@@ -372,27 +308,6 @@ onMounted(() => {
   width: 100%;
   height: 2px;
   background: #0d6efd;
-}
-
-.table-actions {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.filter {
-  cursor: pointer;
-}
-
-.export-btn {
-  background: #02833c;
-  color: white;
-  border-radius: 999px;
-  border: none;
-  padding: 8px 16px;
-  display: flex;
-  gap: 6px;
-  align-items: center;
 }
 
 .announcements-table {
@@ -438,17 +353,34 @@ tbody td {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  cursor: pointer;
 }
 
-.export-btn {
-  background: #02833c;
-  color: white;
-  border-radius: 999px;
+.actions-menu {
+  position: absolute;
+  top: 30px;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 120px;
+  background: white;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  border-radius: 10px;
+  z-index: 20;
+}
+
+.actions-menu button {
+  width: 100%;
+  padding: 10px 16px;
   border: none;
-  padding: 8px 16px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  background: white;
+  text-align: left;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.actions-menu button:hover {
+  background: #eef5f9;
 }
 
 .show-all {

@@ -15,14 +15,18 @@ const tabs = [
 const activeTab = ref({ name: 'All', status: 0 })
 const activeTabName = computed(() => activeTab.value.name)
 
-const applications = ref<applicationResponse[]>([])
+type applicationWithActions = applicationResponse & { showActions: boolean }
+
+const applications = ref<applicationWithActions[]>([])
 
 async function fetchApplications() {
   loading.value = true
   try {
     const res = await api.get<applicationResponse[]>('/api/v1/transactions')
-    applications.value = res.data
-    console.log('Applications loaded:', applications.value)
+    applications.value = res.data.map((app) => ({
+      ...app,
+      showActions: false,
+    }))
   } catch (e) {
     console.error('Error fetching applications:', e)
   } finally {
@@ -37,17 +41,32 @@ const filteredApplications = computed(() => {
   return applications.value.filter((app) => app.status === activeTab.value.status)
 })
 
+async function updateStatus(id: number, status: number) {
+  try {
+    await api.patch(`/api/v1/transactions/${id}`, { status })
+    await fetchApplications()
+  } catch (e) {
+    console.error('Failed to update status:', e)
+  }
+}
+
+function statusLabel(status: number) {
+  switch (status) {
+    case 2:
+      return 'Approved'
+    case 3:
+      return 'Denied'
+    default:
+      return 'Pending'
+  }
+}
+
 onMounted(() => {
   fetchApplications()
 })
 </script>
 
 <template>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
-    rel="stylesheet"
-  />
-
   <div class="services-view">
     <div class="top-header">
       <div class="welcome">
@@ -63,47 +82,6 @@ onMounted(() => {
           <span class="material-symbols-outlined">search</span>
           <input type="text" placeholder="Search by name or queue number" />
         </div>
-
-        <button class="pill dark">
-          Service
-          <span class="material-symbols-outlined">expand_more</span>
-        </button>
-
-        <button class="pill dark">
-          Category
-          <span class="material-symbols-outlined">expand_more</span>
-        </button>
-
-        <button class="pill dark">
-          Status
-          <span class="material-symbols-outlined">expand_more</span>
-        </button>
-      </div>
-    </div>
-
-    <div class="stats">
-      <div class="stat-card">
-        <div class="stat-left">
-          <span class="material-symbols-outlined">download</span>
-          <span>New Applications</span>
-        </div>
-        <div class="count">03</div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-left">
-          <span class="material-symbols-outlined">visibility</span>
-          <span>For Verification</span>
-        </div>
-        <div class="count">02</div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-left">
-          <span class="material-symbols-outlined">calendar_month</span>
-          <span>Scheduled Meetings</span>
-        </div>
-        <div class="count">01</div>
       </div>
     </div>
 
@@ -120,11 +98,6 @@ onMounted(() => {
             {{ tab.name }}
           </button>
         </div>
-
-        <button class="export-btn">
-          <span class="material-symbols-outlined">ios_share</span>
-          Export
-        </button>
       </div>
 
       <TableLoading :loading="loading" message="Loading services..." height="620px">
@@ -154,10 +127,24 @@ onMounted(() => {
                 <span class="material-symbols-outlined file-icon">folder</span>
               </td>
               <td>
-                <button class="actions-btn">
-                  {{ row.status }}
-                  <span class="material-symbols-outlined">expand_more</span>
-                </button>
+                <!-- v-menu action button -->
+                <v-menu v-model="row.showActions" offset-y>
+                  <template v-slot:activator="{ props }">
+                    <button class="actions-btn" v-bind="props">
+                      {{ statusLabel(row.status) }}
+                      <span class="material-symbols-outlined">expand_more</span>
+                    </button>
+                  </template>
+
+                  <v-list>
+                    <v-list-item @click="updateStatus(row.id!, 2)">
+                      <v-list-item-title>Approve</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item @click="updateStatus(row.id!, 3)">
+                      <v-list-item-title>Deny</v-list-item-title>
+                    </v-list-item>
+                  </v-list>
+                </v-menu>
               </td>
             </tr>
           </tbody>
@@ -289,6 +276,32 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  cursor: pointer;
+}
+
+.actions-menu {
+  position: absolute;
+  top: 42px;
+  right: 0;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  z-index: 10;
+}
+
+.actions-menu button {
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  background: white;
+  text-align: left;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.actions-menu button:hover {
+  background: #eef5f9;
 }
 
 .export-btn {

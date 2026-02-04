@@ -300,17 +300,23 @@ import catto from '../../assets/catto.jpg'
 .service {
   border: 1px solid #e5e7eb;
   border-radius: 14px;
-  padding: 14px;
+  padding: 20px;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
 }
 
-.service button,
-.primary {
+.service button {
   background: #fbbf24;
   border: none;
   border-radius: 999px;
-  padding: 2px 16px;
+  padding: 6px 18px;
   margin-top: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 .center {
