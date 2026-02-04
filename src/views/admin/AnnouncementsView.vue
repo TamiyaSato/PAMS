@@ -2,15 +2,22 @@
 import api from '@/api/axios'
 import { onMounted, ref, computed, watch } from 'vue'
 import type { announcementResponse } from '@/models/announcementResponse'
-
+import { useAuthStore } from '@/stores/auth'
 const dialog = ref(false)
 const tabs = ['All Announcements', 'Posted', 'Scheduled', 'Draft', 'Archived']
 const activeTab = ref('All Announcements')
 
+const authStore = useAuthStore()
 type announcementWithActions = announcementResponse & { showActions: boolean }
 
 const announcements = ref<announcementWithActions[]>([])
 const loading = ref(false)
+
+const categoryOptions = [
+  { label: 'Urgent Alerts', value: 1 },
+  { label: 'Community News', value: 2 },
+  { label: 'Services', value: 3 },
+]
 
 function getStatus(a: announcementWithActions) {
   return a.active ?? a.status ?? 0
@@ -42,6 +49,7 @@ const newAnnouncement = ref<Partial<announcementResponse>>({
 
 async function saveAnnouncement() {
   try {
+    const userId = authStore.user?.oid
     const dateCreated = newAnnouncement.value.date_posted
       ? new Date(newAnnouncement.value.date_posted).toISOString().split('T')[0]
       : ''
@@ -49,9 +57,10 @@ async function saveAnnouncement() {
     const payload: Partial<announcementResponse> = {
       title: newAnnouncement.value.title,
       content: newAnnouncement.value.content,
-      posted_by: newAnnouncement.value.posted_by,
+      posted_by: userId,
       status: newAnnouncement.value.status,
       date_posted: dateCreated,
+      category: newAnnouncement.value.category,
     }
 
     await api.post('/api/v1/announcements', payload)
@@ -78,6 +87,7 @@ watch(dialog, (val) => {
       posted_by: 0,
       status: 1,
       date_posted: '',
+      category: undefined,
     }
   }
 })
@@ -88,7 +98,7 @@ async function fetchAnnouncements() {
     const response = await api.get<announcementResponse[]>('/api/v1/announcements')
     announcements.value = response.data.map((a) => ({
       ...a,
-      posted_date: a.date_posted ? a.date_posted.split('T')[0] : '',
+      date_posted: a.date_posted ? a.date_posted.split('T')[0] : '',
       showActions: false,
     }))
   } catch (error) {
@@ -100,7 +110,7 @@ async function fetchAnnouncements() {
 
 async function updateAnnouncementStatus(id: number, status: number) {
   try {
-    await api.put(`/api/v1/announcements/${id}`, { status })
+    await api.patch(`/api/v1/announcements/${id}/status`, { status })
     await fetchAnnouncements()
   } catch (error) {
     console.error('Failed to update announcement status:', error)
@@ -139,8 +149,14 @@ onMounted(() => fetchAnnouncements())
             <v-card-text>
               <v-text-field v-model="newAnnouncement.title" label="Title*" required />
               <v-text-field v-model="newAnnouncement.content" label="Summary*" required />
-              <v-text-field v-model="newAnnouncement.posted_by" label="Posted By" />
-              <v-text-field v-model="newAnnouncement.category" label="Category" />
+              <v-autocomplete
+                v-model="newAnnouncement.category"
+                label="Category"
+                :items="categoryOptions"
+                item-title="label"
+                item-value="value"
+                required
+              />
               <v-date-input v-model="newAnnouncement.date_posted" label="Post Date" />
             </v-card-text>
             <v-card-actions>
@@ -176,7 +192,6 @@ onMounted(() => fetchAnnouncements())
             <th>Summary</th>
             <th>Posted By</th>
             <th>Posted Date</th>
-            <th>Status</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -189,9 +204,6 @@ onMounted(() => fetchAnnouncements())
             <td>{{ row.content }}</td>
             <td>{{ row.full_name }}</td>
             <td>{{ row.date_posted }}</td>
-            <td>
-              <span class="status-pill">{{ row.status }}</span>
-            </td>
             <td>
               <v-menu v-model="row.showActions" offset-y>
                 <template v-slot:activator="{ props: activatorProps }">

@@ -8,4 +8,5 @@ export interface announcementResponse {
   date_posted?: string
   date?: string
   active?: number
+  category?: number
 }

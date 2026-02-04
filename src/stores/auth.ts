@@ -3,7 +3,7 @@ import { ref } from 'vue'
 
 export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = ref(false)
-  const user = ref(null)
+  const user = ref<{ oid: number; username: string; role: string } | null>(null)
 
   // Check if user is logged in (e.g., check for token in localStorage)
   function checkAuth() {
@@ -25,6 +25,7 @@ export const useAuthStore = defineStore('auth', () => {
       const base64Payload = token.split('.')[1] as string
       const payload = atob(base64Payload)
       return JSON.parse(payload)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
       return null
     }
