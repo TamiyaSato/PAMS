@@ -3,20 +3,11 @@ import api from '@/api/axios'
 import { ref, computed, onMounted } from 'vue'
 import TableLoading from '@/components/TableLoading.vue'
 import catto from '../../assets/catto.jpg'
-import type { serviceResponse } from '@/models/serviceResponse'
-
-interface ApplicationResponse {
-  id: number
-  service_name: string
-  date_filed: string
-  current_stage: string
-  status: number
-}
-
+import type { applicationResponse } from '@/models/serviceResponse'
 type AppTab = 'In Progress' | 'Completed' | 'Declined'
 
 const activeTab = ref<AppTab>('In Progress')
-const applications = ref<ApplicationResponse[]>([])
+const applications = ref<applicationResponse[]>([])
 const loading = ref(false)
 
 const filteredApplications = computed(() => {
@@ -32,17 +23,26 @@ const filteredApplications = computed(() => {
   }
 })
 
+function statusLabel(status: number) {
+  switch (status) {
+    case 1:
+      return 'In Progress'
+    case 2:
+      return 'Completed'
+    case 3:
+      return 'Declined'
+    default:
+      return 'Cancelled'
+  }
+}
+
 async function fetchApplications() {
   loading.value = true
   try {
-    const res = await api.get<serviceResponse[]>('/api/v1/service-types')
-
-    applications.value = res.data.map((s) => ({
-      id: s.id,
-      service_name: s.name,
-      date_filed: s.date_created?.split('T')[0] ?? '',
-      current_stage: 'Submitted', // default stage
-      status: Number(s.active), // make sure active is number
+    const res = await api.get<applicationResponse[]>('/api/v1/transactions/me')
+    applications.value = res.data.map((a) => ({
+      ...a,
+      date_created: a.date_created?.split('T')[0] ?? '',
     }))
     console.log('Applications loaded:', applications.value)
   } catch (e) {
@@ -105,7 +105,6 @@ onMounted(fetchApplications)
               <th>ID No</th>
               <th>Service Name</th>
               <th>Date Filed</th>
-              <th>Current Stage</th>
               <th>Status</th>
               <th>Actions</th>
             </tr>
@@ -120,9 +119,9 @@ onMounted(fetchApplications)
               </td>
 
               <td>#{{ app.id }}</td>
-              <td>{{ app.service_name }}</td>
-              <td>{{ app.date_filed }}</td>
-              <td>{{ app.current_stage }}</td>
+              <td>{{ app.name }}</td>
+              <td>{{ app.date_created }}</td>
+              <td>{{ statusLabel(app.status) }}</td>
 
               <td>
                 <span v-if="app.status === 1" class="status-pill progress">In Progress</span>
