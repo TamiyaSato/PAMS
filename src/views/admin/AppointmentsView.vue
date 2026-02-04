@@ -230,7 +230,7 @@ function viewAppointment(a: NormalizedAppointment) {
             <v-col cols="12">
               <v-text-field
                 label="Location / Venue"
-                :model-value="selectedAppointment.location ?? '—'"
+                :model-value="selectedAppointment.location ?? ''"
                 readonly
                 variant="outlined"
                 persistent-placeholder
@@ -240,7 +240,7 @@ function viewAppointment(a: NormalizedAppointment) {
             <v-col cols="12">
               <v-textarea
                 label="Notes / Special Instructions"
-                :value="selectedAppointment.notes ?? '—'"
+                :value="selectedAppointment.notes ?? ''"
                 readonly
                 auto-grow
               />
