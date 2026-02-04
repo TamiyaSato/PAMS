@@ -5,23 +5,26 @@ import type { applicationResponse, serviceResponse } from '@/models/serviceRespo
 import TableLoading from '@/components/TableLoading.vue'
 import catto from '../../assets/catto.jpg'
 
-const activeTab = ref('Active')
+const tabs = ['Active', 'Applied', 'Cancelled'] as const
+type Tab = (typeof tabs)[number]
+
+const activeTab = ref<Tab>('Active')
 
 const showPopup = ref(false)
 const popupMessage = ref('')
 
 const loadingServices = ref(false)
+const loading = ref(false)
+
 const services = ref<serviceResponse[]>([])
 const appliedServices = ref<applicationResponse[]>([])
 const cancelledServices = ref<applicationResponse[]>([])
-const loading = ref(false)
 
 async function fetchServices() {
   loadingServices.value = true
   try {
     const res = await api.get<serviceResponse[]>('/api/v1/service-types')
     services.value = res.data
-    console.log('Services loaded:', services.value)
   } catch (e) {
     console.error('Error fetching services:', e)
   } finally {
@@ -34,7 +37,6 @@ async function fetchAppliedServices() {
   try {
     const res = await api.get<applicationResponse[]>('/api/v1/transactions/me?status=1')
     appliedServices.value = res.data
-    console.log('Applied services loaded:', appliedServices.value)
   } catch (e) {
     console.error('Error fetching applied services:', e)
   } finally {
@@ -47,7 +49,6 @@ async function fetchCancelledServices() {
   try {
     const res = await api.get<applicationResponse[]>('/api/v1/transactions/me?status=3')
     cancelledServices.value = res.data
-    console.log('Cancelled services loaded:', cancelledServices.value)
   } catch (e) {
     console.error('Error fetching cancelled services:', e)
   } finally {
@@ -60,32 +61,35 @@ function getStatus(s: serviceResponse) {
 }
 
 const filteredServices = computed(() => {
-  const all = services.value || []
-
-  if (activeTab.value === 'Active') return all.filter((s) => getStatus(s) === 1)
-  if (activeTab.value === 'Applied') return appliedServices.value
-  if (activeTab.value === 'Cancelled') return cancelledServices.value
-
-  return all
+  switch (activeTab.value) {
+    case 'Active':
+      return services.value.filter((s) => getStatus(s) === 1)
+    case 'Applied':
+      return appliedServices.value
+    case 'Cancelled':
+      return cancelledServices.value
+    default:
+      return []
+  }
 })
 
-async function applyForService(serviceResponse: serviceResponse) {
+async function applyForService(service: serviceResponse) {
   loading.value = true
   try {
-    if (!serviceResponse.id) {
-      throw new Error('service_id is required to apply for a service')
+    if (!service.id) {
+      throw new Error('service_id is required')
     }
 
-    await api.post(`/api/v1/transactions`, {
-      service_id: serviceResponse.id,
+    await api.post('/api/v1/transactions', {
+      service_id: service.id,
     })
 
-    fetchAppliedServices()
+    await fetchAppliedServices()
 
-    popupMessage.value = `Successfully applied for ${serviceResponse.name}!`
+    popupMessage.value = `Successfully applied for ${service.name}!`
     showPopup.value = true
   } catch (error) {
-    popupMessage.value = `Failed to apply for ${serviceResponse.name}`
+    popupMessage.value = `Failed to apply for ${service.name}`
     showPopup.value = true
     console.error(error)
   } finally {
@@ -124,7 +128,7 @@ onMounted(() => {
       <div class="table-top">
         <div class="tabs">
           <button
-            v-for="tab in ['Active', 'Applied', 'Cancelled']"
+            v-for="tab in tabs"
             :key="tab"
             class="tab"
             :class="{ active: activeTab === tab }"
@@ -142,7 +146,7 @@ onMounted(() => {
 
       <v-divider />
 
-      <TableLoading :loading="loading" message="Loading services..." height="620px">
+      <TableLoading :loading="loadingServices" message="Loading services..." height="620px">
         <v-table fixed-header height="620px" class="services-table">
           <thead>
             <tr>
@@ -152,8 +156,9 @@ onMounted(() => {
               <th>Description</th>
               <th>Category</th>
               <th>Open Slots</th>
-              <th>Cut-Off Date</th>
-              <th>Actions</th>
+
+              <th v-if="activeTab === 'Active'">Cut-Off Date</th>
+              <th v-if="activeTab === 'Active'">Actions</th>
             </tr>
           </thead>
 
@@ -165,36 +170,27 @@ onMounted(() => {
                 </div>
               </td>
 
-              <td>#{{ service.id }}</td>
+              <td>{{ service.id }}</td>
               <td>{{ service.name }}</td>
               <td class="muted">{{ service.description }}</td>
               <td>{{ service.category }}</td>
               <td>08 / 15</td>
-              <td>{{ service.date_created }}</td>
 
-              <td>
-                <button
-                  v-if="getStatus(service) === 1"
-                  class="apply-btn"
-                  :disabled="loading"
-                  @click="applyForService(service)"
-                >
+              <td v-if="activeTab === 'Active'">
+                {{ service.date_created }}
+              </td>
+
+              <td v-if="activeTab === 'Active'">
+                <button class="apply-btn" :disabled="loading" @click="applyForService(service)">
                   Apply Here
                 </button>
-
-                <span v-else-if="getStatus(service) === 2" class="status-pill applied">
-                  Edit/Cancel
-                </span>
-
-                <span v-else-if="getStatus(service) === 3" class="status-pill cancelled">
-                  Cancelled
-                </span>
               </td>
             </tr>
           </tbody>
         </v-table>
       </TableLoading>
     </div>
+
     <v-dialog v-model="showPopup" max-width="400">
       <v-card class="pa-4 text-center">
         <v-card-title class="text-h6"> Application Status </v-card-title>
@@ -204,7 +200,7 @@ onMounted(() => {
         </v-card-text>
 
         <v-card-actions class="justify-center">
-          <v-btn color="primary" @click="showPopup = false"> OK </v-btn>
+          <v-btn color="primary" @click="showPopup = false">OK</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -249,11 +245,6 @@ onMounted(() => {
   padding: 8px;
   border-radius: 50%;
   cursor: pointer;
-}
-
-.avatar {
-  border-radius: 50%;
-  width: 36px;
 }
 
 .table-card {
@@ -338,25 +329,5 @@ onMounted(() => {
   display: flex;
   gap: 6px;
   align-items: center;
-}
-
-.status-pill {
-  padding: 6px 14px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 600;
-  border: none;
-  cursor: default;
-}
-
-.status-pill.cancelled {
-  background: #fde8e8;
-  color: #dc2626;
-}
-
-.status-pill.applied {
-  background: transparent;
-  border: 1px solid #ffc107;
-  color: #ffc107;
 }
 </style>
