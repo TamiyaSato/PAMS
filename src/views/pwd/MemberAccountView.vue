@@ -1,10 +1,15 @@
 <script setup lang="ts">
+import { useRoute } from 'vue-router'
 import catto from '../../assets/catto.jpg'
+
+const route = useRoute()
+
+const isActive = (name: string) => route.name === name
 </script>
 
 <template>
   <div class="account-wrapper">
-    <div class="breadcrumb">Dashboard > Profile</div>
+    <div class="breadcrumb">Profile</div>
 
     <div class="account-grid">
       <v-card class="sidebar">
@@ -16,9 +21,26 @@ import catto from '../../assets/catto.jpg'
         </div>
 
         <v-list nav>
-          <v-list-item to="/member/account" prepend-icon="person" title="User Profile" />
-          <v-list-item to="/member/account/edit" prepend-icon="edit" title="Edit Profile" />
-          <v-list-item to="/member/account/password" prepend-icon="key" title="Change Password" />
+          <v-list-item
+            :to="{ name: 'member-profile' }"
+            prepend-icon="person"
+            title="User Profile"
+            :active="isActive('member-profile')"
+          />
+
+          <v-list-item
+            :to="{ name: 'member-edit-profile' }"
+            prepend-icon="edit"
+            title="Edit Profile"
+            :active="isActive('member-edit-profile')"
+          />
+
+          <v-list-item
+            :to="{ name: 'member-change-password' }"
+            prepend-icon="key"
+            title="Change Password"
+            :active="isActive('member-change-password')"
+          />
         </v-list>
       </v-card>
 

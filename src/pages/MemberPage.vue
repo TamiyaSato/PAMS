@@ -43,7 +43,13 @@ watch(
       </div>
 
       <v-list nav class="menu-list">
-        <v-list-item to="/member/" prepend-icon="home" title="Dashboard" exact class="menu-item" />
+        <v-list-item
+          to="/member/"
+          prepend-icon="dashboard"
+          title="Dashboard"
+          exact
+          class="menu-item"
+        />
 
         <v-list-item
           to="/member/services"
