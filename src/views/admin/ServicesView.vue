@@ -41,7 +41,8 @@ const filteredServices = computed(() => {
       (s) =>
         s.name?.toLowerCase().includes(q) ||
         s.description?.toLowerCase().includes(q) ||
-        s.category?.toLowerCase().includes(q),
+        s.category?.toLowerCase().includes(q) ||
+        s.requirements?.toLowerCase().includes(q),
     )
   }
 

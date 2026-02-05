@@ -3,16 +3,20 @@ import api from '@/api/axios'
 import { onMounted, ref, computed, watch } from 'vue'
 import type { announcementResponse } from '@/models/announcementResponse'
 import { useAuthStore } from '@/stores/auth'
+
 const dialog = ref(false)
 const tabs = ['All Announcements', 'Posted', 'Scheduled', 'Draft', 'Archived']
 const activeTab = ref('All Announcements')
 
 const authStore = useAuthStore()
 authStore.checkAuth()
+
 type announcementWithActions = announcementResponse & { showActions: boolean }
 
 const announcements = ref<announcementWithActions[]>([])
 const loading = ref(false)
+
+const searchQuery = ref('')
 
 const categoryOptions = [
   { label: 'Urgent Alerts', value: 1 },
@@ -38,6 +42,20 @@ const filteredAnnouncements = computed(() => {
     default:
       return all
   }
+})
+
+const searchedAnnouncements = computed(() => {
+  if (!searchQuery.value) return filteredAnnouncements.value
+
+  const q = searchQuery.value.toLowerCase()
+
+  return filteredAnnouncements.value.filter(
+    (a) =>
+      a.title?.toLowerCase().includes(q) ||
+      a.content?.toLowerCase().includes(q) ||
+      String(a.id).includes(q) ||
+      a.full_name?.toLowerCase().includes(q),
+  )
 })
 
 const newAnnouncement = ref<Partial<announcementResponse>>({
@@ -135,7 +153,7 @@ onMounted(() => fetchAnnouncements())
       <div class="top-actions">
         <div class="search-box">
           <span class="material-symbols-outlined">search</span>
-          <input type="text" placeholder="Search" />
+          <input type="text" placeholder="Search" v-model="searchQuery" />
         </div>
 
         <v-dialog v-model="dialog" max-width="600">
@@ -198,7 +216,7 @@ onMounted(() => fetchAnnouncements())
         </thead>
 
         <tbody>
-          <tr v-for="row in filteredAnnouncements" :key="row.id">
+          <tr v-for="row in searchedAnnouncements" :key="row.id">
             <td><input type="checkbox" /></td>
             <td>{{ row.id }}</td>
             <td>{{ row.title }}</td>

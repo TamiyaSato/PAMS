@@ -6,6 +6,8 @@ import { ref, computed, onMounted } from 'vue'
 
 const loading = ref(false)
 
+const searchQuery = ref('')
+
 const tabs = [
   { name: 'All', status: 0 },
   { name: 'Approved', status: 2 },
@@ -39,6 +41,16 @@ const filteredApplications = computed(() => {
     return applications.value
   }
   return applications.value.filter((app) => app.status === activeTab.value.status)
+})
+
+const searchedApplications = computed(() => {
+  if (!searchQuery.value) return filteredApplications.value
+
+  const q = searchQuery.value.toLowerCase()
+
+  return filteredApplications.value.filter(
+    (app) => app.applicant_name?.toLowerCase().includes(q) || String(app.id).includes(q),
+  )
 })
 
 async function updateStatus(id: number, status: number) {
@@ -80,7 +92,7 @@ onMounted(() => {
       <div class="top-actions">
         <div class="search-box">
           <span class="material-symbols-outlined">search</span>
-          <input type="text" placeholder="Search by name or queue number" />
+          <input type="text" placeholder="Search by name or queue number" v-model="searchQuery" />
         </div>
       </div>
     </div>
@@ -116,7 +128,7 @@ onMounted(() => {
           </thead>
 
           <tbody>
-            <tr v-for="row in filteredApplications" :key="row.id">
+            <tr v-for="row in searchedApplications" :key="row.id">
               <td><input type="checkbox" /></td>
               <td>{{ row.id }}</td>
               <td>{{ row.applicant_name }}</td>
@@ -127,7 +139,6 @@ onMounted(() => {
                 <span class="material-symbols-outlined file-icon">folder</span>
               </td>
               <td>
-                <!-- v-menu action button -->
                 <v-menu v-model="row.showActions" offset-y>
                   <template v-slot:activator="{ props }">
                     <button class="actions-btn" v-bind="props">
