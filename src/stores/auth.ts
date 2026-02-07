@@ -3,7 +3,7 @@ import { ref } from 'vue'
 
 export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = ref(false)
-  const user = ref<{ oid: number; username: string; role: string } | null>(null)
+  const user = ref<{ oid: number; email: string; username: string; role: string } | null>(null)
 
   // Check if user is logged in (e.g., check for token in localStorage)
   function checkAuth() {

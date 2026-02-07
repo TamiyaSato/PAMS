@@ -62,11 +62,11 @@ const handleRegister = async () => {
     await api.post('/api/v1/persons', {
       full_name: `${firstName.value} ${lastName.value}`,
       date_of_birth: dateOfBirth.value,
-      gender: gender.value,
+      gender: gender.value[0],
       disability_type: disabilityType.value,
       address: address.value,
       contact_no: phone.value,
-      status: 'Active',
+      status: 1,
       date_registered: new Date().toISOString().split('T')[0],
 
       email: email.value,
@@ -125,29 +125,29 @@ const handleRegister = async () => {
 
         <div class="grid">
           <div>
-            <label>First Name</label>
+            <label>First Name<span class="text-red">*</span></label>
             <input v-model="firstName" type="text" />
           </div>
           <div>
-            <label>Last Name</label>
+            <label>Last Name<span class="text-red">*</span></label>
             <input v-model="lastName" type="text" />
           </div>
 
           <div>
-            <label>Email</label>
+            <label>Email<span class="text-red">*</span></label>
             <input v-model="email" type="email" />
           </div>
           <div>
-            <label>Phone Number</label>
+            <label>Phone Number<span class="text-red">*</span></label>
             <input v-model="phone" type="text" />
           </div>
 
           <div>
-            <label>Date of Birth</label>
+            <label>Date of Birth<span class="text-red">*</span></label>
             <input v-model="dateOfBirth" type="date" />
           </div>
           <div>
-            <label>Gender</label>
+            <label>Gender<span class="text-red">*</span></label>
             <select v-model="gender" class="input">
               <option value="">Select Gender</option>
               <option value="Male">Male</option>
@@ -156,20 +156,20 @@ const handleRegister = async () => {
           </div>
 
           <div>
-            <label>Disability Type</label>
+            <label>Disability Type<span class="text-red">*</span></label>
             <input v-model="disabilityType" type="text" />
           </div>
           <div>
-            <label>Address</label>
+            <label>Address<span class="text-red">*</span></label>
             <input v-model="address" type="text" />
           </div>
 
           <div>
-            <label>Password</label>
+            <label>Password<span class="text-red">*</span></label>
             <input v-model="password" type="password" />
           </div>
           <div>
-            <label>Confirm Password</label>
+            <label>Confirm Password<span class="text-red">*</span></label>
             <input v-model="confirmPassword" type="password" />
           </div>
         </div>
@@ -182,7 +182,11 @@ const handleRegister = async () => {
 
           <label class="checkbox-row">
             <input type="checkbox" v-model="agreed" />
-            <span> I agree to the <a href="#">Terms</a> and <a href="#">Privacy Policy</a> </span>
+            <span>
+              I agree to the <a href="#">Terms</a> and
+              <a href="#">Privacy Policy</a>
+              <span class="text-red">*</span>
+            </span>
           </label>
         </div>
 

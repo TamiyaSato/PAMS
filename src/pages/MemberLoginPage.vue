@@ -25,7 +25,7 @@ onUnmounted(() => clearInterval(interval))
 const router = useRouter()
 const authStore = useAuthStore()
 
-const username = ref('')
+const email = ref('')
 const password = ref('')
 const remember = ref(false)
 const form = ref(false)
@@ -47,7 +47,7 @@ const handleSubmit = async () => {
 
   try {
     const response = await api.post<LoginResponse>('/api/v1/persons/login', {
-      username: username.value,
+      email: email.value,
       password: password.value,
     })
 
@@ -104,7 +104,7 @@ const handleSubmit = async () => {
           <div class="field">
             <label>Email Address</label>
             <v-text-field
-              v-model="username"
+              v-model="email"
               variant="outlined"
               density="comfortable"
               hide-details
