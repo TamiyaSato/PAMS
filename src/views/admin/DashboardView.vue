@@ -8,6 +8,26 @@ interface DashboardStats {
   activeServiceTypes: number
 }
 
+interface ServiceType {
+  id: number
+  name: string
+  description: string
+  requirements: string
+  category: string
+  active: number
+  date_created: string
+}
+
+interface Transaction {
+  id: number
+  name: string
+  description: string
+  category: string
+  status: number
+  date_created: string
+  applicant_name: string
+}
+
 const lastLogin = ref(new Date().toLocaleString())
 const years = [2023, 2024, 2025]
 const categories = ['Financial', 'Medical', 'Training', 'Goods']
@@ -18,26 +38,9 @@ const selectedCategory = ref<string | null>(null)
 const yearMenu = ref(false)
 const categoryMenu = ref(false)
 
-const services = ref([
-  {
-    id: 1,
-    name: 'Wheelchair Distribution',
-    category: 'PWD Application',
-    applicants: 162,
-    status: 'Active',
-  },
-])
+const services = ref<ServiceType[]>([])
 
-const applications = ref([
-  {
-    id: 1,
-    applicant_name: 'Juan A. Dela Cruz',
-    disability: 'Psychosocial',
-    service: 'Christmas Package',
-    date_created: '2025-12-03',
-    status: 1,
-  },
-])
+const applications = ref<Transaction[]>([])
 
 const openServiceActionId = ref<number | null>(null)
 const openApplicationActionId = ref<number | null>(null)
@@ -58,8 +61,32 @@ async function fetchDashboardStats() {
   }
 }
 
+async function fetchServiceTypes() {
+  try {
+    const { data } = await api.get<ServiceType[]>('/api/v1/service-types', {
+      params: { status: 1, top: 3 },
+    })
+    services.value = Array.isArray(data) ? data : []
+  } catch (error) {
+    console.error('Failed to fetch service types:', error)
+  }
+}
+
+async function fetchTransactions() {
+  try {
+    const { data } = await api.get<Transaction[]>('/api/v1/transactions', {
+      params: { status: 1, top: 3 },
+    })
+    applications.value = Array.isArray(data) ? data : []
+  } catch (error) {
+    console.error('Failed to fetch transactions:', error)
+  }
+}
+
 onMounted(() => {
   fetchDashboardStats()
+  fetchServiceTypes()
+  fetchTransactions()
 })
 
 function toggleServiceActions(id: number) {
@@ -219,11 +246,9 @@ function updateApplicationStatus(id: number, status: number) {
             </div>
 
             <div class="service-info">
-              <strong>{{ service.applicants }}</strong>
-              <span>Applicants</span>
+              <strong>{{ service.description }}</strong>
+              <span>Description</span>
             </div>
-
-            <span class="status active">{{ service.status }}</span>
 
             <div style="position: relative" class="service-actions-wrapper">
               <button class="actions-btn" @click="toggleServiceActions(service.id)">
@@ -256,17 +281,17 @@ function updateApplicationStatus(id: number, status: number) {
             </div>
 
             <div class="review-cell">
-              <div class="value">{{ app.disability }}</div>
+              <div class="value">–</div>
               <div class="label">Disability</div>
             </div>
 
             <div class="review-cell">
-              <div class="value">{{ app.service }}</div>
+              <div class="value">{{ app.name }}</div>
               <div class="label">Service</div>
             </div>
 
             <div class="review-cell">
-              <div class="value">{{ app.date_created }}</div>
+              <div class="value">{{ app.date_created ? app.date_created.split('T')[0] : '' }}</div>
               <div class="label">Date</div>
             </div>
 
