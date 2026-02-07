@@ -13,7 +13,9 @@ const handleLogout = () => {
   localStorage.removeItem('authToken')
   authStore.logout()
 }
-const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+/* NEW — same date handling as Appointments */
+const selectedDate = ref('2026-02-25')
 </script>
 
 <template>
@@ -22,6 +24,7 @@ const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
       <v-app-bar flat title="Appointments" />
 
       <v-container fluid>
+        <!-- PENDING -->
         <v-row>
           <v-col cols="12">
             <v-card class="pending-card">
@@ -49,23 +52,16 @@ const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
           </v-col>
         </v-row>
 
+        <!-- CALENDAR + DETAILS -->
         <v-row class="mt-6">
           <v-col cols="12" md="6">
             <v-card class="calendar-card">
-              <div class="calendar-header">
-                <strong>February 2026</strong>
-              </div>
-              <div class="calendar-grid">
-                <div class="day" v-for="d in days" :key="d">{{ d }}</div>
-                <div
-                  class="date"
-                  v-for="n in 28"
-                  :key="n"
-                  :class="{ selected: n === 25, muted: n === 18 }"
-                >
-                  {{ n }}
-                </div>
-              </div>
+              <v-date-picker
+                v-model="selectedDate"
+                color="primary"
+                show-adjacent-months
+                hide-header
+              />
             </v-card>
           </v-col>
 
@@ -79,8 +75,13 @@ const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
               </div>
 
               <div class="details-row">
-                <span class="label">Date & Time</span>
-                <span class="value">Wednesday, February 25, 2026 · 10:00 AM</span>
+                <span class="label">Date</span>
+                <span class="value">{{ selectedDate }}</span>
+              </div>
+
+              <div class="details-row">
+                <span class="label">Time</span>
+                <span class="value">10:00 AM</span>
               </div>
 
               <div class="details-row">
@@ -99,11 +100,13 @@ const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
           </v-col>
         </v-row>
 
+        <!-- HISTORY -->
         <v-row class="mt-6">
           <v-col cols="12">
             <v-card class="history-card">
               <h3 class="section-title">Appointments History</h3>
-              <v-simple-table dense>
+
+              <v-table density="compact">
                 <thead>
                   <tr>
                     <th></th>
@@ -115,11 +118,12 @@ const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
                     <th>Actions</th>
                   </tr>
                 </thead>
+
                 <tbody>
                   <tr>
                     <td>
                       <v-avatar color="#F59E0B" size="32">
-                        <v-icon dark>mdi-wheelchair</v-icon>
+                        <v-icon>mdi-wheelchair</v-icon>
                       </v-avatar>
                     </td>
                     <td>#001</td>
@@ -127,45 +131,28 @@ const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
                     <td>February 25, 2026 10:00 AM</td>
                     <td>Liza Ramos</td>
                     <td>
-                      <v-chip color="#10B981" small>Approved</v-chip>
+                      <v-chip color="#10B981" size="small">Approved</v-chip>
                     </td>
                     <td>
-                      <v-btn small color="#F59E0B" dark>View Details</v-btn>
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td>
-                      <v-avatar color="#F59E0B" size="32">
-                        <v-icon dark>mdi-wheelchair</v-icon>
-                      </v-avatar>
-                    </td>
-                    <td>#002</td>
-                    <td>Initial Consultation</td>
-                    <td>February 18, 2026 9:00 AM</td>
-                    <td>Liza Ramos</td>
-                    <td>
-                      <v-chip color="#EF4444" small>Cancelled</v-chip>
-                    </td>
-                    <td>
-                      <v-btn small color="#F59E0B" dark>View Details</v-btn>
+                      <v-btn size="small" color="#F59E0B" variant="flat"> View Details </v-btn>
                     </td>
                   </tr>
                 </tbody>
-              </v-simple-table>
+              </v-table>
             </v-card>
           </v-col>
         </v-row>
       </v-container>
 
+      <!-- LOGOUT -->
       <v-dialog v-if="isAuthenticated" v-model="logoutDialog" max-width="420" persistent>
         <v-card class="logout-card">
-          <v-card-title class="logout-title"> Confirm Logout </v-card-title>
+          <v-card-title class="logout-title">Confirm Logout</v-card-title>
           <v-card-text class="logout-text"> Are you sure you want to log out? </v-card-text>
           <v-card-actions class="logout-actions">
             <div class="logout-btn-wrapper">
-              <v-btn class="btn-no" @click="logoutDialog = false"> NO </v-btn>
-              <v-btn class="btn-yes" @click="handleLogout"> YES </v-btn>
+              <v-btn class="btn-no" @click="logoutDialog = false">NO</v-btn>
+              <v-btn class="btn-yes" @click="handleLogout">YES</v-btn>
             </div>
           </v-card-actions>
         </v-card>
