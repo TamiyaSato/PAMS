@@ -14,7 +14,6 @@ const handleLogout = () => {
   authStore.logout()
 }
 
-/* NEW — same date handling as Appointments */
 const selectedDate = ref('2026-02-25')
 </script>
 
@@ -24,7 +23,6 @@ const selectedDate = ref('2026-02-25')
       <v-app-bar flat title="Appointments" />
 
       <v-container fluid>
-        <!-- PENDING -->
         <v-row>
           <v-col cols="12">
             <v-card class="pending-card">
@@ -52,7 +50,6 @@ const selectedDate = ref('2026-02-25')
           </v-col>
         </v-row>
 
-        <!-- CALENDAR + DETAILS -->
         <v-row class="mt-6">
           <v-col cols="12" md="6">
             <v-card class="calendar-card">
@@ -100,7 +97,6 @@ const selectedDate = ref('2026-02-25')
           </v-col>
         </v-row>
 
-        <!-- HISTORY -->
         <v-row class="mt-6">
           <v-col cols="12">
             <v-card class="history-card">
@@ -144,7 +140,6 @@ const selectedDate = ref('2026-02-25')
         </v-row>
       </v-container>
 
-      <!-- LOGOUT -->
       <v-dialog v-if="isAuthenticated" v-model="logoutDialog" max-width="420" persistent>
         <v-card class="logout-card">
           <v-card-title class="logout-title">Confirm Logout</v-card-title>
