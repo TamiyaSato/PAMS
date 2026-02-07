@@ -1,5 +1,12 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import api from '@/api/axios'
+
+interface DashboardStats {
+  transactionsCreatedToday: number
+  transactionsWithStatusOne: number
+  activeServiceTypes: number
+}
 
 const lastLogin = ref(new Date().toLocaleString())
 const years = [2023, 2024, 2025]
@@ -34,6 +41,26 @@ const applications = ref([
 
 const openServiceActionId = ref<number | null>(null)
 const openApplicationActionId = ref<number | null>(null)
+
+// Dashboard stats from API
+const applicationsToday = ref<number>(0)
+const activeServices = ref<number>(0)
+const pendingApprovals = ref<number>(0)
+
+async function fetchDashboardStats() {
+  try {
+    const { data } = await api.get<DashboardStats>('/api/v1/dashboard')
+    applicationsToday.value = data.transactionsCreatedToday
+    activeServices.value = data.activeServiceTypes
+    pendingApprovals.value = data.transactionsWithStatusOne
+  } catch (error) {
+    console.error('Failed to fetch dashboard stats:', error)
+  }
+}
+
+onMounted(() => {
+  fetchDashboardStats()
+})
 
 function toggleServiceActions(id: number) {
   openServiceActionId.value = openServiceActionId.value === id ? null : id
@@ -152,7 +179,7 @@ function updateApplicationStatus(id: number, status: number) {
           <v-icon>assignment</v-icon>
           <span>Applications Today</span>
         </div>
-        <div class="count">21</div>
+        <div class="count">{{ applicationsToday }}</div>
       </div>
 
       <div class="stat-card">
@@ -160,7 +187,7 @@ function updateApplicationStatus(id: number, status: number) {
           <v-icon>inventory</v-icon>
           <span>Active Services</span>
         </div>
-        <div class="count">124</div>
+        <div class="count">{{ activeServices }}</div>
       </div>
 
       <div class="stat-card">
@@ -168,7 +195,7 @@ function updateApplicationStatus(id: number, status: number) {
           <v-icon>warning</v-icon>
           <span>Pending Approvals</span>
         </div>
-        <div class="count">08</div>
+        <div class="count">{{ pendingApprovals }}</div>
       </div>
     </div>
 

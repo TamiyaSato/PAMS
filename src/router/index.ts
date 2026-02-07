@@ -5,6 +5,10 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
+      path: '/',
+      redirect: '/member/login',
+    },
+    {
       path: '/admin/login',
       name: 'admin-login',
       component: () => import('../pages/AdminLoginPage.vue'),
@@ -34,31 +38,37 @@ const router = createRouter({
           name: 'admin-dashboard',
           path: '',
           component: () => import('../views/admin/DashboardView.vue'),
+          meta: { requiresAuth: true, role: 'admin' },
         },
         {
           name: 'admin-services',
           path: 'services',
           component: () => import('../views/admin/ServicesView.vue'),
+          meta: { requiresAuth: true, role: 'admin' },
         },
         {
           name: 'admin-applications',
           path: 'applications',
           component: () => import('../views/admin/ApplicationsView.vue'),
+          meta: { requiresAuth: true, role: 'admin' },
         },
         {
           name: 'admin-announcements',
           path: 'announcements',
           component: () => import('../views/admin/AnnouncementsView.vue'),
+          meta: { requiresAuth: true, role: 'admin' },
         },
         {
           name: 'admin-activity',
           path: 'activity-logs',
           component: () => import('../views/admin/ActivityLogsView.vue'),
+          meta: { requiresAuth: true, role: 'admin' },
         },
         {
           name: 'admin-appointments',
           path: 'appointments',
           component: () => import('../views/admin/AppointmentsView.vue'),
+          meta: { requiresAuth: true, role: 'admin' },
         },
       ],
     },
@@ -73,25 +83,30 @@ const router = createRouter({
           name: 'member-dashboard',
           path: '',
           component: () => import('../views/pwd/MemberDashboardView.vue'),
+          meta: { requiresAuth: true, role: 'member' },
         },
         {
           name: 'member-services',
           path: 'services',
           component: () => import('../views/pwd/MemberServicesView.vue'),
+          meta: { requiresAuth: true, role: 'member' },
         },
         {
           path: 'status',
           name: 'member-status',
           component: () => import('../views/pwd/MemberApplicationStatusView.vue'),
+          meta: { requiresAuth: true, role: 'member' },
         },
         {
           path: 'appointments',
           name: 'member-appointments',
           component: () => import('../views/pwd/MemberAppointmentView.vue'),
+          meta: { requiresAuth: true, role: 'member' },
         },
         {
           path: 'account',
           component: () => import('../views/pwd/MemberAccountView.vue'),
+          meta: { requiresAuth: true, role: 'member' },
           children: [
             {
               path: '',
@@ -114,21 +129,25 @@ const router = createRouter({
           path: 'support',
           name: 'member-help',
           component: () => import('../views/pwd/MemberHelpAndSupportView.vue'),
+          meta: { requiresAuth: true, role: 'member' },
         },
         {
           path: 'accessibility',
           name: 'member-settings',
           component: () => import('../views/pwd/MemberAccessibilitySettingsView.vue'),
+          meta: { requiresAuth: true, role: 'member' },
         },
         {
           path: 'announcements',
           name: 'member-announcements',
           component: () => import('../views/pwd/MemberAnnouncementView.vue'),
+          meta: { requiresAuth: true, role: 'member' },
         },
         {
           path: 'history',
           name: 'member-history',
           component: () => import('../views/pwd/MemberHistoryView.vue'),
+          meta: { requiresAuth: true, role: 'member' },
         },
       ],
     },
@@ -138,6 +157,7 @@ const router = createRouter({
 // Navigation guard to check authentication
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
+  authStore.checkAuth()
   const requiresAuth = to.meta.requiresAuth !== false
   const role = to.meta.role
 
@@ -148,27 +168,20 @@ router.beforeEach((to, from, next) => {
   } else if (to.name === 'member-login' && authStore.isAuthenticated) {
     next({ name: 'member' })
   } else {
-    // if (role) {
-    //   const userRole = authStore.user?.role
-    //   if (userRole) {
-    //     if (userRole !== role) {
-    //       if (userRole === 'admin') {
-    //         next({ name: 'admin-login' })
-    //       } else if (userRole === 'member') {
-    //         next({ name: 'member-login' })
-    //       } else {
-    //         next({ name: 'member-login' })
-    //       }
-    //     } else {
-    //       next()
-    //     }
-    //   } else {
-    //     next({ name: 'member-login' })
-    //   }
-    // } else {
-    //   next()
-    // }
-    next()
+    if (role) {
+      const userRole = authStore.user?.role
+      if (userRole) {
+        if (userRole !== role) {
+          next(false)
+        } else {
+          next()
+        }
+      } else {
+        next(false)
+      }
+    } else {
+      next()
+    }
   }
 })
 
