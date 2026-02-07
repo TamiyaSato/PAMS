@@ -304,7 +304,7 @@ function viewAppointment(a: NormalizedAppointment) {
                 </v-col>
 
                 <v-col cols="6">
-                  <v-date-picker v-model="newAppointment.preferred_date" title="Select date" />
+                  <v-date-input v-model="newAppointment.preferred_date" label="Preferred Date" />
                 </v-col>
 
                 <v-col cols="12">

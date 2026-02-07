@@ -67,6 +67,7 @@ const handleSubmit = async () => {
       }, 1200)
     } else {
       errorMessage.value = 'Invalid login credentials.'
+      isLoading.value = false
     }
   } catch (error: unknown) {
     const err = error as AxiosError<{ message?: string }>
@@ -79,9 +80,8 @@ const handleSubmit = async () => {
       errorMessage.value = 'Unexpected error occurred.'
     }
 
+    isLoading.value = false
     console.error('Login error:', err)
-  }
-  {
   }
 }
 </script>
