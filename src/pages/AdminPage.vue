@@ -96,7 +96,7 @@ watch(
     </v-navigation-drawer>
 
     <v-main>
-      <v-app-bar flat title="Overview" />
+      <v-app-bar flat title="PAMS" />
 
       <v-dialog v-if="isAuthenticated" v-model="logoutDialog" max-width="420" persistent>
         <v-card class="logout-card">

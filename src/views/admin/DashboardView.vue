@@ -29,7 +29,6 @@ interface Transaction {
   applicant_name: string
 }
 
-const lastLogin = ref(new Date().toLocaleString())
 const years = [2023, 2024, 2025]
 const categories = ['Financial', 'Medical', 'Training', 'Goods']
 
@@ -169,13 +168,7 @@ async function updateApplicationStatus(id: number, status: number) {
 <template>
   <v-container fluid class="admin-container">
     <div class="top-header">
-      <div class="welcome">
-        <h2>Hi, Admin!</h2>
-        <p>
-          <a href="#">Logged in as: [Admin] [Role]</a><br />
-          <a href="#">Last login: {{ lastLogin }}</a>
-        </p>
-      </div>
+      <h2>Dashboard</h2>
 
       <div class="top-actions">
         <div class="search-box">

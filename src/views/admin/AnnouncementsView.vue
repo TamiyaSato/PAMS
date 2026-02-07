@@ -142,13 +142,7 @@ onMounted(() => fetchAnnouncements())
 <template>
   <div class="announcements-view">
     <div class="top-header">
-      <div class="welcome">
-        <h2>Hi, Admin!</h2>
-        <p>
-          <a href="#">Logged in as: [Admin] [Role]</a><br />
-          <a href="#">Last login: [date, time]</a>
-        </p>
-      </div>
+      <h2>Announcements</h2>
 
       <div class="top-actions">
         <div class="search-box">
