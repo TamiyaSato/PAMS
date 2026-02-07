@@ -1,21 +1,56 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import catto from '../../assets/catto.jpg'
+
+const userName = ref('John')
+const lastLogin = ref(new Date().toLocaleString())
+const searchQuery = ref('')
+
+const viewStat = (type: string) => {
+  console.log('Viewing:', type)
+}
+
+const applications = ref([
+  {
+    ref: '001',
+    service: 'Wheelchair Distribution',
+    status: 'VIEWED',
+  },
+  {
+    ref: '002',
+    service: 'Wheelchair Distribution',
+    status: 'SUBMITTED',
+  },
+  {
+    ref: '003',
+    service: 'Wheelchair Distribution',
+    status: 'ACTIVE',
+  },
+])
+
+const applyService = (service: string) => {
+  console.log('Applying for:', service)
+}
+
+const manageAppointments = () => {
+  console.log('Manage appointments clicked')
+}
 </script>
 
 <template>
   <v-container fluid class="dashboard">
     <div class="top-bar">
       <div class="left">
-        <h2>Welcome, John!</h2>
+        <h2>Welcome, {{ userName }}!</h2>
         <p class="sub">
-          <a href="#">Last login: [date, time]</a>
+          <a href="#">Last login: {{ lastLogin }}</a>
         </p>
       </div>
 
       <div class="right">
         <div class="search">
           <v-icon size="18">search</v-icon>
-          <input placeholder="Search for something" />
+          <input v-model="searchQuery" placeholder="Search for something" />
         </div>
 
         <v-icon class="icon">settings</v-icon>
@@ -31,19 +66,19 @@ import catto from '../../assets/catto.jpg'
       <div class="stat-pill">
         <v-icon class="stat-icon">description</v-icon>
         <span class="stat-title">Active Applications</span>
-        <button class="stat-btn">View More</button>
+        <button class="stat-btn" @click="viewStat('applications')">View More</button>
       </div>
 
       <div class="stat-pill">
         <v-icon class="stat-icon">check_circle</v-icon>
         <span class="stat-title">Approved Services</span>
-        <button class="stat-btn">View More</button>
+        <button class="stat-btn" @click="viewStat('approved')">View More</button>
       </div>
 
       <div class="stat-pill">
         <v-icon class="stat-icon">event</v-icon>
         <span class="stat-title">Next Appointment</span>
-        <button class="stat-btn">View More</button>
+        <button class="stat-btn" @click="viewStat('appointment')">View More</button>
       </div>
     </div>
 
@@ -55,49 +90,19 @@ import catto from '../../assets/catto.jpg'
             <a href="#">View full status page</a>
           </div>
 
-          <div class="status-row">
+          <div class="status-row" v-for="(app, index) in applications" :key="index">
             <v-avatar size="36" color="green">
               <v-icon color="white" size="18">accessible</v-icon>
             </v-avatar>
 
             <div class="status-info">
-              <strong>Ref. #001</strong>
+              <strong>Ref. #{{ app.ref }}</strong>
               <small>Reference Number</small>
-              <span>Wheelchair Distribution</span>
+              <span>{{ app.service }}</span>
               <small>Service Name</small>
             </div>
 
-            <span class="badge viewed">VIEWED</span>
-          </div>
-
-          <div class="status-row">
-            <v-avatar size="36" color="green">
-              <v-icon color="white" size="18">accessible</v-icon>
-            </v-avatar>
-
-            <div class="status-info">
-              <strong>Ref. #002</strong>
-              <small>Reference Number</small>
-              <span>Wheelchair Distribution</span>
-              <small>Service Name</small>
-            </div>
-
-            <span class="badge viewed">SUBMITTED</span>
-          </div>
-
-          <div class="status-row">
-            <v-avatar size="36" color="green">
-              <v-icon color="white" size="18">accessible</v-icon>
-            </v-avatar>
-
-            <div class="status-info">
-              <strong>Ref. #003</strong>
-              <small>Reference Number</small>
-              <span>Wheelchair Distribution</span>
-              <small>Service Name</small>
-            </div>
-
-            <span class="badge viewed">ACTIVE</span>
+            <span class="badge viewed">{{ app.status }}</span>
           </div>
         </v-card>
 
@@ -108,19 +113,19 @@ import catto from '../../assets/catto.jpg'
             <div class="service">
               <v-icon>card_giftcard</v-icon>
               <strong>CHRISTMAS PACKAGE</strong>
-              <button>Apply Here</button>
+              <button @click="applyService('Christmas Package')">Apply Here</button>
             </div>
 
             <div class="service">
               <v-icon>visibility</v-icon>
               <strong>EYEGLASSES</strong>
-              <button>Apply Here</button>
+              <button @click="applyService('Eyeglasses')">Apply Here</button>
             </div>
 
             <div class="service">
               <v-icon>fitness_center</v-icon>
               <strong>PROSTHETIC</strong>
-              <button>Apply Here</button>
+              <button @click="applyService('Prosthetic')">Apply Here</button>
             </div>
           </div>
         </v-card>
@@ -129,7 +134,6 @@ import catto from '../../assets/catto.jpg'
       <v-col cols="12" md="4">
         <v-card class="card center">
           <h3>My Queue #</h3>
-
           <div class="queue-oval">PWD-014</div>
 
           <p class="queue-desc">
@@ -146,7 +150,7 @@ import catto from '../../assets/catto.jpg'
             <li>Date/Time: December 15, 2025 at 8 AM</li>
             <li>Visit: Barangay Sampaloc 2</li>
           </ul>
-          <button class="primary">Manage Appointments Here</button>
+          <button class="primary" @click="manageAppointments">Manage Appointments Here</button>
         </v-card>
 
         <v-card class="card mt">

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
+const lastLogin = ref(new Date().toLocaleString())
 const years = [2023, 2024, 2025]
 const categories = ['Financial', 'Medical', 'Training', 'Goods']
 
@@ -67,7 +68,7 @@ function updateApplicationStatus(id: number, status: number) {
         <h2>Hi, Admin!</h2>
         <p>
           <a href="#">Logged in as: [Admin] [Role]</a><br />
-          <a href="#">Last login: [date, time]</a>
+          <a href="#">Last login: {{ lastLogin }}</a>
         </p>
       </div>
 
