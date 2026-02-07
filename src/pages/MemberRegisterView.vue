@@ -76,7 +76,7 @@ const handleRegister = async () => {
     successMessage.value = 'Account created successfully! Redirecting to login...'
 
     setTimeout(() => {
-      router.push('/login')
+      router.push('/member/login')
     }, 2000)
   } catch (error: unknown) {
     const err = error as AxiosError<{ message?: string }>
