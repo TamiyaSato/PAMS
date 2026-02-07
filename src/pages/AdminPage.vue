@@ -10,6 +10,11 @@ authStore.checkAuth()
 
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 const logoutDialog = ref(false)
+const displayName = computed(() => {
+  const u = authStore.user
+  if (!u) return ''
+  return u.username || u.email || ''
+})
 
 const handleLogout = () => {
   logoutDialog.value = false
@@ -96,7 +101,16 @@ watch(
     </v-navigation-drawer>
 
     <v-main>
-      <v-app-bar flat title="PAMS" />
+      <v-app-bar flat title="PAMS">
+        <template #append>
+          <label
+            style="font-size: small; font-weight: 600; font-family: Inter, sans-serif"
+            v-if="displayName"
+            class="user-display"
+            >Logged in: {{ displayName }}</label
+          >
+        </template>
+      </v-app-bar>
 
       <v-dialog v-if="isAuthenticated" v-model="logoutDialog" max-width="420" persistent>
         <v-card class="logout-card">
@@ -204,5 +218,11 @@ watch(
   min-width: 90px;
   height: 36px;
   font-weight: 600;
+}
+
+.user-display {
+  font-size: 14px;
+  color: #666;
+  margin-right: 8px;
 }
 </style>

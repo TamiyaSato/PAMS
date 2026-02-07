@@ -44,7 +44,7 @@ onMounted(() => fetchAnnouncements())
 
 <template>
   <v-container fluid class="member-container">
-    <div class="top-bar">
+    <div class="top-header">
       <h2>Announcements</h2>
 
       <div class="top-actions">

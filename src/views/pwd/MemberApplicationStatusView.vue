@@ -57,7 +57,7 @@ onMounted(fetchApplications)
 
 <template>
   <v-container fluid class="member-container">
-    <div class="top-bar">
+    <div class="top-header">
       <h2>Application Status</h2>
 
       <div class="top-actions">

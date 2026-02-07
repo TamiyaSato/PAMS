@@ -2,8 +2,6 @@
 import { ref } from 'vue'
 import catto from '../../assets/catto.jpg'
 
-const userName = ref('John')
-const lastLogin = ref(new Date().toLocaleString())
 const searchQuery = ref('')
 
 const viewStat = (type: string) => {
@@ -40,12 +38,7 @@ const manageAppointments = () => {
 <template>
   <v-container fluid class="dashboard">
     <div class="top-bar">
-      <div class="left">
-        <h2>Welcome, {{ userName }}!</h2>
-        <p class="sub">
-          <a href="#">Last login: {{ lastLogin }}</a>
-        </p>
-      </div>
+      <h2>Dashboard</h2>
 
       <div class="right">
         <div class="search">

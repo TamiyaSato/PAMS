@@ -65,7 +65,7 @@ const openPreview = (doc: Doc) => {
 <template>
   <v-container fluid class="member-container">
     <!-- Top Bar -->
-    <div class="top-bar">
+    <div class="top-header">
       <h2>History & Documents</h2>
 
       <div class="top-actions">

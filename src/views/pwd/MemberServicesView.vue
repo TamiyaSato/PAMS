@@ -106,8 +106,9 @@ onMounted(() => {
 
 <template>
   <v-container fluid class="member-container">
-    <div class="top-bar">
+    <div class="top-header">
       <h2>Apply for Services</h2>
+      <br />
 
       <div class="top-actions">
         <div class="search-box">
