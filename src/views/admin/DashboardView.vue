@@ -22,6 +22,7 @@ interface Transaction {
   id: number
   name: string
   description: string
+  disability_type: string
   category: string
   status: number
   date_created: string
@@ -44,6 +45,9 @@ const applications = ref<Transaction[]>([])
 
 const openServiceActionId = ref<number | null>(null)
 const openApplicationActionId = ref<number | null>(null)
+
+const editDialog = ref(false)
+const editServiceData = ref<Partial<ServiceType>>({})
 
 // Dashboard stats from API
 const applicationsToday = ref<number>(0)
@@ -97,6 +101,48 @@ function toggleApplicationActions(id: number) {
   openApplicationActionId.value = openApplicationActionId.value === id ? null : id
 }
 
+function editServiceAction(service: ServiceType) {
+  editServiceData.value = {
+    ...service,
+    date_created: service.date_created ? service.date_created.split('T')[0] : '',
+  }
+  editDialog.value = true
+  openServiceActionId.value = null
+}
+
+async function saveEditService() {
+  if (!editServiceData.value.id) return
+  try {
+    const payload = {
+      name: editServiceData.value.name,
+      description: editServiceData.value.description,
+      requirements: editServiceData.value.requirements,
+      category: editServiceData.value.category,
+      active: editServiceData.value.active,
+      date_created: editServiceData.value.date_created
+        ? new Date(editServiceData.value.date_created).toISOString().split('T')[0]
+        : '',
+    }
+    await api.put(`/api/v1/service-types/${editServiceData.value.id}`, payload)
+    editDialog.value = false
+    await fetchServiceTypes()
+    await fetchDashboardStats()
+  } catch (error) {
+    console.error('Error editing service:', error)
+  }
+}
+
+async function updateServiceStatus(id: number, status: number) {
+  try {
+    await api.patch(`/api/v1/service-types/${id}/status`, { status })
+    openServiceActionId.value = null
+    await fetchServiceTypes()
+    await fetchDashboardStats()
+  } catch (error) {
+    console.error('Error updating service status:', error)
+  }
+}
+
 function applicationStatusLabel(status: number) {
   switch (status) {
     case 2:
@@ -108,10 +154,15 @@ function applicationStatusLabel(status: number) {
   }
 }
 
-function updateApplicationStatus(id: number, status: number) {
-  const app = applications.value.find((a) => a.id === id)
-  if (app) app.status = status
-  openApplicationActionId.value = null
+async function updateApplicationStatus(id: number, status: number) {
+  try {
+    await api.patch(`/api/v1/transactions/${id}/status`, { status })
+    openApplicationActionId.value = null
+    await fetchTransactions()
+    await fetchDashboardStats()
+  } catch (error) {
+    console.error('Failed to update application status:', error)
+  }
 }
 </script>
 
@@ -257,9 +308,9 @@ function updateApplicationStatus(id: number, status: number) {
               </button>
 
               <div v-if="openServiceActionId === service.id" class="actions-menu">
-                <button>Edit</button>
-                <button>Archive</button>
-                <button>Delete</button>
+                <button @click="editServiceAction(service)">Edit</button>
+                <button @click="updateServiceStatus(service.id, 3)">Archive</button>
+                <button @click="updateServiceStatus(service.id, 2)">Draft</button>
               </div>
             </div>
           </div>
@@ -281,7 +332,7 @@ function updateApplicationStatus(id: number, status: number) {
             </div>
 
             <div class="review-cell">
-              <div class="value">–</div>
+              <div class="value">{{ app.disability_type }}</div>
               <div class="label">Disability</div>
             </div>
 
@@ -335,6 +386,26 @@ function updateApplicationStatus(id: number, status: number) {
         </v-card>
       </v-col>
     </v-row>
+
+    <v-dialog v-model="editDialog" max-width="600">
+      <v-card title="Edit Service">
+        <v-card-text>
+          <v-text-field v-model="editServiceData.name" label="Service Name*" required />
+          <v-text-field v-model="editServiceData.description" label="Description*" required />
+          <v-autocomplete
+            v-model="editServiceData.category"
+            :items="['Financial', 'Goods', 'Training', 'Medical']"
+            label="Category"
+          />
+          <v-text-field v-model="editServiceData.requirements" label="Requirements*" required />
+          <v-date-input v-model="editServiceData.date_created" label="Cut-Off Date" />
+        </v-card-text>
+        <v-card-actions>
+          <v-btn @click="editDialog = false">Close</v-btn>
+          <v-btn color="primary" @click="saveEditService">Save</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
