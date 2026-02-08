@@ -29,6 +29,22 @@ interface Transaction {
   applicant_name: string
 }
 
+interface Appointment {
+  id: number
+  person_id: number
+  service_id: number
+  preferred_date: string
+  status: number
+  user_id: number
+  location: string | null
+  notes: string | null
+  person_name?: string
+  person_contact?: string
+  service_name?: string
+  service_description?: string
+  service_category?: string
+}
+
 const years = [2023, 2024, 2025]
 const categories = ['Financial', 'Medical', 'Training', 'Goods']
 
@@ -41,6 +57,7 @@ const categoryMenu = ref(false)
 const services = ref<ServiceType[]>([])
 
 const applications = ref<Transaction[]>([])
+const appointments = ref<Appointment[]>([])
 
 const openServiceActionId = ref<number | null>(null)
 const openApplicationActionId = ref<number | null>(null)
@@ -86,10 +103,40 @@ async function fetchTransactions() {
   }
 }
 
+async function fetchAppointments() {
+  try {
+    const { data } = await api.get<Appointment[]>('/api/v1/appointments/me?top=3')
+    appointments.value = Array.isArray(data) ? data : []
+  } catch (error) {
+    console.error('Failed to fetch appointments:', error)
+  }
+}
+
+function formatAppointmentDate(iso: string) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  return d.toLocaleDateString(undefined, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
+function formatAppointmentTime(iso: string) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  return d.toLocaleTimeString(undefined, {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  })
+}
+
 onMounted(() => {
   fetchDashboardStats()
   fetchServiceTypes()
   fetchTransactions()
+  fetchAppointments()
 })
 
 function toggleServiceActions(id: number) {
@@ -359,15 +406,21 @@ async function updateApplicationStatus(id: number, status: number) {
       <v-col cols="12" md="4">
         <v-card class="content-card">
           <h3>Appointments</h3>
-          <div class="appointment">
+          <div v-for="apt in appointments" :key="apt.id" class="appointment">
             <v-avatar color="green" size="40">
-              <v-icon color="white">accessible</v-icon>
+              <v-icon color="white">event</v-icon>
             </v-avatar>
-            <div>
-              <strong>Thu, Dec 18 – J. Dela Cruz</strong>
-              <p>11:30 AM – 12:00 PM</p>
+            <div class="appointment-details">
+              <strong
+                >{{ formatAppointmentDate(apt.preferred_date) }} –
+                {{ apt.person_name || '—' }}</strong
+              >
+              <p>{{ formatAppointmentTime(apt.preferred_date) }}</p>
+              <p v-if="apt.service_name" class="appointment-service">{{ apt.service_name }}</p>
+              <p v-if="apt.location" class="appointment-meta">{{ apt.location }}</p>
             </div>
           </div>
+          <p v-if="appointments.length === 0" class="text-medium-emphasis">No appointments</p>
         </v-card>
 
         <v-card class="content-card mt-4">
@@ -519,5 +572,38 @@ async function updateApplicationStatus(id: number, status: number) {
 .pill.dark {
   background: #0b1b5a;
   color: white;
+}
+
+.appointment {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.appointment:last-of-type {
+  margin-bottom: 0;
+}
+.appointment-details {
+  flex: 1;
+  min-width: 0;
+}
+.appointment-details strong {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+.appointment-details p {
+  margin: 0;
+  font-size: 13px;
+  color: #666;
+  line-height: 1.4;
+}
+.appointment-service {
+  font-weight: 500;
+  color: #333;
+}
+.appointment-meta {
+  font-size: 12px;
+  color: #8a8a8a;
 }
 </style>
