@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import api from '@/api/axios'
+import { useAuthStore } from '@/stores/auth'
+
+const authStore = useAuthStore()
+authStore.checkAuth()
 
 interface Appointment {
   id: number
@@ -24,6 +28,17 @@ interface NormalizedAppointment extends Appointment {
   date_only: string
 }
 
+interface Person {
+  id: number
+  full_name: string
+  email: string
+}
+
+interface ServiceType {
+  id: number
+  name: string
+}
+
 const dialog = ref(false)
 const viewMode = ref<'week' | 'month'>('week')
 
@@ -44,6 +59,8 @@ const STATUS_MAP: Record<number, 'Scheduled' | 'Completed' | 'Cancelled'> = {
 }
 
 const appointments = ref<Appointment[]>([])
+const persons = ref<Person[]>([])
+const serviceTypes = ref<ServiceType[]>([])
 const loading = ref(false)
 const selectedDate = ref<Date>(new Date())
 
@@ -84,26 +101,39 @@ async function fetchAppointments() {
   }
 }
 
+async function fetchPersons() {
+  try {
+    const res = await api.get<Person[]>('/api/v1/persons', { params: { status: 1 } })
+    persons.value = Array.isArray(res.data) ? res.data : []
+  } catch (err) {
+    console.error('Failed to fetch persons', err)
+    persons.value = []
+  }
+}
+
+async function fetchServiceTypes() {
+  try {
+    const res = await api.get<ServiceType[]>('/api/v1/service-types')
+    serviceTypes.value = Array.isArray(res.data) ? res.data : []
+  } catch (err) {
+    console.error('Failed to fetch service types', err)
+    serviceTypes.value = []
+  }
+}
+
 async function saveAppointment() {
-  if (
-    !newAppointment.person_id ||
-    !newAppointment.service_id ||
-    !newAppointment.preferred_date ||
-    !newAppointment.user_id
-  )
+  if (!newAppointment.person_id || !newAppointment.service_id || !newAppointment.preferred_date)
     return
 
   try {
-    const statusNum = Number(
-      Object.entries(STATUS_MAP).find(([, v]) => v === newAppointment.status)?.[0] ?? 2,
-    )
-
     await api.post('/api/v1/appointments', {
       person_id: Number(newAppointment.person_id),
       service_id: Number(newAppointment.service_id),
       preferred_date: newAppointment.preferred_date.toISOString().split('T')[0],
-      user_id: Number(newAppointment.user_id),
-      status: statusNum,
+      user_id: Number(authStore.user?.oid),
+      status: 1,
+      location: newAppointment.location,
+      notes: newAppointment.notes,
     })
 
     dialog.value = false
@@ -143,7 +173,11 @@ const cancelledAppointments = computed(() =>
   normalizedAppointments.value.filter((a) => a.status_text === 'Cancelled'),
 )
 
-onMounted(fetchAppointments)
+onMounted(() => {
+  fetchAppointments()
+  fetchPersons()
+  fetchServiceTypes()
+})
 
 function viewAppointment(a: NormalizedAppointment) {
   selectedAppointment.value = a
@@ -288,18 +322,28 @@ function viewAppointment(a: NormalizedAppointment) {
             <v-card-text>
               <v-row dense>
                 <v-col cols="12">
-                  <v-text-field
-                    label="Person ID"
-                    v-model.number="newAppointment.person_id"
-                    required
+                  <v-select
+                    label="Person"
+                    v-model="newAppointment.person_id"
+                    :items="persons"
+                    item-title="full_name"
+                    item-value="id"
+                    variant="outlined"
+                    clearable
+                    :loading="!persons.length"
                   />
                 </v-col>
 
                 <v-col cols="12">
-                  <v-text-field
-                    label="Service ID"
-                    v-model.number="newAppointment.service_id"
-                    required
+                  <v-select
+                    label="Service Type"
+                    v-model="newAppointment.service_id"
+                    :items="serviceTypes"
+                    item-title="name"
+                    item-value="id"
+                    variant="outlined"
+                    clearable
+                    :loading="!serviceTypes.length"
                   />
                 </v-col>
 
@@ -309,29 +353,19 @@ function viewAppointment(a: NormalizedAppointment) {
 
                 <v-col cols="12">
                   <v-text-field
-                    label="Assigned User ID"
-                    v-model.number="newAppointment.user_id"
-                    required
+                    label="Location / Venue"
+                    v-model="newAppointment.location"
+                    variant="outlined"
                   />
                 </v-col>
 
                 <v-col cols="12">
-                  <v-col cols="12">
-                    <v-text-field
-                      label="Location / Venue"
-                      v-model="newAppointment.location"
-                      variant="outlined"
-                    />
-                  </v-col>
-
-                  <v-col cols="12">
-                    <v-textarea
-                      label="Notes / Special Instructions"
-                      v-model="newAppointment.notes"
-                      auto-grow
-                      variant="outlined"
-                    />
-                  </v-col>
+                  <v-textarea
+                    label="Notes / Special Instructions"
+                    v-model="newAppointment.notes"
+                    auto-grow
+                    variant="outlined"
+                  />
                 </v-col>
               </v-row>
             </v-card-text>
