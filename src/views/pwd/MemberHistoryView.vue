@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import catto from '../../assets/catto.jpg'
 
 type HistoryTab = 'Application History' | 'My Documents'
 const activeTab = ref<HistoryTab>('Application History')
@@ -68,19 +67,7 @@ const openPreview = (doc: Doc) => {
     <div class="top-header">
       <h2>History & Documents</h2>
 
-      <div class="top-actions">
-        <div class="search-box">
-          <span class="material-symbols-outlined">search</span>
-          <input type="text" placeholder="Search for something" />
-        </div>
-
-        <span class="material-symbols-outlined icon-btn">settings</span>
-        <span class="material-symbols-outlined icon-btn">notifications</span>
-
-        <v-avatar size="30">
-          <img :src="catto" />
-        </v-avatar>
-      </div>
+      <div class="top-actions"></div>
     </div>
 
     <!-- Main Card -->

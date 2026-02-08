@@ -45,15 +45,6 @@ interface Appointment {
   service_category?: string
 }
 
-const years = [2023, 2024, 2025]
-const categories = ['Financial', 'Medical', 'Training', 'Goods']
-
-const selectedYear = ref<number | null>(null)
-const selectedCategory = ref<string | null>(null)
-
-const yearMenu = ref(false)
-const categoryMenu = ref(false)
-
 const services = ref<ServiceType[]>([])
 
 const applications = ref<Transaction[]>([])
@@ -217,78 +208,7 @@ async function updateApplicationStatus(id: number, status: number) {
     <div class="top-header">
       <h2>Dashboard</h2>
 
-      <div class="top-actions">
-        <div class="search-box">
-          <v-icon size="18">search</v-icon>
-          <input type="text" placeholder="Search dashboard" />
-        </div>
-
-        <v-menu v-model="yearMenu" max-width="200">
-          <template v-slot:activator="{ props }">
-            <button class="pill dark" v-bind="props">
-              {{ selectedYear ?? 'Year' }}
-              <v-icon size="18">expand_more</v-icon>
-            </button>
-          </template>
-          <v-list>
-            <v-list-item
-              v-for="y in years"
-              :key="y"
-              @click="
-                () => {
-                  selectedYear = y
-                  yearMenu = false
-                }
-              "
-            >
-              <v-list-item-title>{{ y }}</v-list-item-title>
-            </v-list-item>
-            <v-list-item
-              @click="
-                () => {
-                  selectedYear = null
-                  yearMenu = false
-                }
-              "
-            >
-              <v-list-item-title>All Years</v-list-item-title>
-            </v-list-item>
-          </v-list>
-        </v-menu>
-
-        <v-menu v-model="categoryMenu" max-width="200">
-          <template v-slot:activator="{ props }">
-            <button class="pill dark" v-bind="props">
-              {{ selectedCategory ?? 'Category' }}
-              <v-icon size="18">expand_more</v-icon>
-            </button>
-          </template>
-          <v-list>
-            <v-list-item
-              v-for="cat in categories"
-              :key="cat"
-              @click="
-                () => {
-                  selectedCategory = cat
-                  categoryMenu = false
-                }
-              "
-            >
-              <v-list-item-title>{{ cat }}</v-list-item-title>
-            </v-list-item>
-            <v-list-item
-              @click="
-                () => {
-                  selectedCategory = null
-                  categoryMenu = false
-                }
-              "
-            >
-              <v-list-item-title>All Categories</v-list-item-title>
-            </v-list-item>
-          </v-list>
-        </v-menu>
-      </div>
+      <div class="top-actions"></div>
     </div>
 
     <div class="stats">

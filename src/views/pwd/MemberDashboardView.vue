@@ -1,8 +1,5 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import catto from '../../assets/catto.jpg'
-
-const searchQuery = ref('')
 
 const viewStat = (type: string) => {
   console.log('Viewing:', type)
@@ -40,19 +37,7 @@ const manageAppointments = () => {
     <div class="top-bar">
       <h2>Dashboard</h2>
 
-      <div class="right">
-        <div class="search">
-          <v-icon size="18">search</v-icon>
-          <input v-model="searchQuery" placeholder="Search for something" />
-        </div>
-
-        <v-icon class="icon">settings</v-icon>
-        <v-icon class="icon">notifications</v-icon>
-
-        <v-avatar size="40">
-          <img :src="catto" alt="Avatar" />
-        </v-avatar>
-      </div>
+      <div class="right"></div>
     </div>
 
     <div class="stats">

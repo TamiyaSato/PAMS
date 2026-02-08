@@ -3,7 +3,6 @@ import api from '@/api/axios'
 import { onMounted, ref, computed } from 'vue'
 import type { applicationResponse, serviceResponse } from '@/models/serviceResponse'
 import TableLoading from '@/components/TableLoading.vue'
-import catto from '../../assets/catto.jpg'
 
 const tabs = ['Active', 'Applied', 'Cancelled'] as const
 type Tab = (typeof tabs)[number]
@@ -110,19 +109,7 @@ onMounted(() => {
       <h2>Apply for Services</h2>
       <br />
 
-      <div class="top-actions">
-        <div class="search-box">
-          <span class="material-symbols-outlined">search</span>
-          <input type="text" placeholder="Search for something" />
-        </div>
-
-        <span class="material-symbols-outlined icon-btn">settings</span>
-        <span class="material-symbols-outlined icon-btn">notifications</span>
-
-        <v-avatar size="30">
-          <img :src="catto" alt="Avatar" />
-        </v-avatar>
-      </div>
+      <div class="top-actions"></div>
     </div>
 
     <div class="table-card">
@@ -138,11 +125,6 @@ onMounted(() => {
             {{ tab }}
           </button>
         </div>
-
-        <button class="export-btn">
-          <span class="material-symbols-outlined">filter_alt</span>
-          Export
-        </button>
       </div>
 
       <v-divider />
@@ -319,16 +301,5 @@ onMounted(() => {
   padding: 6px 16px;
   font-weight: 600;
   cursor: pointer;
-}
-
-.export-btn {
-  background: #1e8f5a;
-  color: white;
-  border-radius: 999px;
-  padding: 8px 16px;
-  border: none;
-  display: flex;
-  gap: 6px;
-  align-items: center;
 }
 </style>

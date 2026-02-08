@@ -2,7 +2,6 @@
 import api from '@/api/axios'
 import { ref, computed, onMounted } from 'vue'
 import TableLoading from '@/components/TableLoading.vue'
-import catto from '../../assets/catto.jpg'
 import type { applicationResponse } from '@/models/serviceResponse'
 type AppTab = 'In Progress' | 'Completed' | 'Declined'
 
@@ -60,19 +59,7 @@ onMounted(fetchApplications)
     <div class="top-header">
       <h2>Application Status</h2>
 
-      <div class="top-actions">
-        <div class="search-box">
-          <span class="material-symbols-outlined">search</span>
-          <input type="text" placeholder="Search for something" />
-        </div>
-
-        <span class="material-symbols-outlined icon-btn">settings</span>
-        <span class="material-symbols-outlined icon-btn">notifications</span>
-
-        <v-avatar size="30">
-          <img :src="catto" />
-        </v-avatar>
-      </div>
+      <div class="top-actions"></div>
     </div>
 
     <div class="table-card">
@@ -88,11 +75,6 @@ onMounted(fetchApplications)
             {{ tab }}
           </button>
         </div>
-
-        <button class="export-btn">
-          <span class="material-symbols-outlined">filter_alt</span>
-          Export
-        </button>
       </div>
 
       <v-divider />

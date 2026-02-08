@@ -44,7 +44,6 @@ interface ServiceType {
 }
 
 const dialog = ref(false)
-const viewMode = ref<'week' | 'month'>('week')
 
 const newAppointment = reactive({
   person_id: '',
@@ -378,18 +377,6 @@ function viewAppointment(a: NormalizedAppointment) {
       <h2>Appointments & Schedule</h2>
 
       <div class="header-actions">
-        <div class="search">
-          <span class="material-symbols-outlined">search</span>
-          <input placeholder="Search by name or ID number" />
-        </div>
-
-        <div class="toggle">
-          <button :class="{ active: viewMode === 'week' }" @click="viewMode = 'week'">WEEK</button>
-          <button :class="{ active: viewMode === 'month' }" @click="viewMode = 'month'">
-            MONTH
-          </button>
-        </div>
-
         <v-dialog v-model="dialog" max-width="600">
           <template #activator="{ props }">
             <button class="pill yellow" v-bind="props">+ New Appointment</button>
@@ -541,17 +528,7 @@ function viewAppointment(a: NormalizedAppointment) {
       <div class="all-appointments-header">
         <h3>All Appointments</h3>
 
-        <div class="header-actions">
-          <button class="pill dark">
-            Action
-            <span class="material-symbols-outlined">expand_more</span>
-          </button>
-
-          <button class="pill green">
-            <span class="material-symbols-outlined">upload</span>
-            Export
-          </button>
-        </div>
+        <div class="header-actions"></div>
       </div>
 
       <div class="appointments-columns sticky-header">

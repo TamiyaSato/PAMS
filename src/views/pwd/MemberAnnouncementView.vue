@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import catto from '../../assets/catto.jpg'
 import api from '@/api/axios'
 import type { announcementResponse } from '@/models/announcementResponse'
 
@@ -47,19 +46,7 @@ onMounted(() => fetchAnnouncements())
     <div class="top-header">
       <h2>Announcements</h2>
 
-      <div class="top-actions">
-        <div class="search-box">
-          <span class="material-symbols-outlined">search</span>
-          <input type="text" placeholder="Search for something" />
-        </div>
-
-        <span class="material-symbols-outlined icon-btn">settings</span>
-        <span class="material-symbols-outlined icon-btn">notifications</span>
-
-        <v-avatar size="30">
-          <img :src="catto" />
-        </v-avatar>
-      </div>
+      <div class="top-actions"></div>
     </div>
 
     <div class="table-card">
