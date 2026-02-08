@@ -10,21 +10,25 @@ interface Appointment {
   id: number
   person_id: number
   service_id: number
-  user_id: number
-  applicant_name?: string
-  service_name?: string
-  assigned_staff?: string
   preferred_date: string
+  status: number
+  user_id: number
+  location: string | null
+  notes: string | null
+  person_name?: string
+  person_contact?: string
+  service_name?: string
+  service_description?: string
+  service_category?: string
+  applicant_name?: string
+  assigned_staff?: string
   time_start?: string
   time_end?: string
-  status: number
-  location?: string
-  notes?: string
   created_at?: string
 }
 
 interface NormalizedAppointment extends Appointment {
-  status_text: 'Scheduled' | 'Completed' | 'Cancelled'
+  status_text: 'Confirmed' | 'Pending' | 'Reschedule'
   date_only: string
 }
 
@@ -47,15 +51,15 @@ const newAppointment = reactive({
   service_id: '',
   preferred_date: null as Date | null,
   user_id: '',
-  status: 'Scheduled' as 'Scheduled' | 'Completed' | 'Cancelled',
+  status: 'Pending' as 'Confirmed' | 'Pending' | 'Reschedule',
   location: '',
   notes: '',
 })
 
-const STATUS_MAP: Record<number, 'Scheduled' | 'Completed' | 'Cancelled'> = {
-  0: 'Cancelled',
-  1: 'Completed',
-  2: 'Scheduled',
+const STATUS_MAP: Record<number, 'Confirmed' | 'Pending' | 'Reschedule'> = {
+  1: 'Confirmed',
+  2: 'Pending',
+  3: 'Reschedule',
 }
 
 const appointments = ref<Appointment[]>([])
@@ -67,18 +71,53 @@ const selectedDate = ref<Date>(new Date())
 const viewDialog = ref(false)
 const selectedAppointment = ref<NormalizedAppointment | null>(null)
 
+/** Local YYYY-MM-DD for a Date (avoids UTC shift from toISOString) */
+function toLocalDateString(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+/** Parse UTC ISO string and return local date YYYY-MM-DD for grouping/calendar */
+function getLocalDateOnlyFromISO(iso: string): string {
+  if (!iso) return ''
+  return toLocalDateString(new Date(iso))
+}
+
 function formatDateTime(date: string) {
   const d = new Date(date)
-  return d.toLocaleDateString('en-US', {
+  return d.toLocaleDateString(undefined, {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
   })
 }
 
+/** Format date and time in locale (UTC stored value → local display) */
+function formatDateTimeLocale(date: string) {
+  const d = new Date(date)
+  const dateStr = d.toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
+  const timeStr = d.toLocaleTimeString(undefined, {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  })
+  return `${dateStr}, ${timeStr}`
+}
+
 function formatTime(a: NormalizedAppointment) {
-  if (!a.time_start || !a.time_end) return '—'
-  return `${a.time_start} – ${a.time_end}`
+  if (a.time_start && a.time_end) return `${a.time_start} – ${a.time_end}`
+  const d = new Date(a.preferred_date)
+  return d.toLocaleTimeString(undefined, {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  })
 }
 
 function resetForm() {
@@ -86,7 +125,7 @@ function resetForm() {
   newAppointment.service_id = ''
   newAppointment.preferred_date = null
   newAppointment.user_id = ''
-  newAppointment.status = 'Scheduled'
+  newAppointment.status = 'Pending'
   newAppointment.location = ''
   newAppointment.notes = ''
 }
@@ -129,9 +168,9 @@ async function saveAppointment() {
     await api.post('/api/v1/appointments', {
       person_id: Number(newAppointment.person_id),
       service_id: Number(newAppointment.service_id),
-      preferred_date: newAppointment.preferred_date.toISOString().split('T')[0],
+      preferred_date: toLocalISOString(newAppointment.preferred_date),
       user_id: Number(authStore.user?.oid),
-      status: 1,
+      status: 2,
       location: newAppointment.location,
       notes: newAppointment.notes,
     })
@@ -144,22 +183,29 @@ async function saveAppointment() {
   }
 }
 
-const selectedDateISO = computed(() => selectedDate.value.toISOString().split('T')[0])
+function toLocalISOString(date: Date) {
+  const tzOffset = date.getTimezoneOffset() * 60000 // minutes to milliseconds
+  const localISOTime = new Date(date.getTime() - tzOffset).toISOString()
+  return localISOTime.slice(0, -1) // Remove the 'Z'
+}
 
-/** Unique appointment dates (YYYY-MM-DD) for v-date-picker events */
+/** Selected calendar date in local YYYY-MM-DD (not UTC) */
+const selectedDateISO = computed(() => toLocalDateString(selectedDate.value))
+
+/** Unique appointment dates in local YYYY-MM-DD for v-date-picker events */
 const calendarEvents = computed<string[]>(() => {
   const dates = appointments.value
-    .map((a) => (a.preferred_date ? a.preferred_date.split('T')[0] : null))
+    .map((a) => (a.preferred_date ? getLocalDateOnlyFromISO(a.preferred_date) : null))
     .filter((d): d is string => d != null && d !== '')
   return [...new Set(dates)]
 })
 
 const normalizedAppointments = computed<NormalizedAppointment[]>(() =>
   appointments.value.map((a) => {
-    const dateOnly = a.preferred_date ? a.preferred_date.split('T')[0] : ''
+    const dateOnly = a.preferred_date ? getLocalDateOnlyFromISO(a.preferred_date) : ''
     return {
       ...a,
-      status_text: STATUS_MAP[a.status] ?? 'Scheduled',
+      status_text: STATUS_MAP[a.status] ?? 'Pending',
       date_only: dateOnly as string,
     }
   }),
@@ -173,12 +219,16 @@ const upcomingAppointments = computed(() =>
   normalizedAppointments.value.filter((a) => new Date(a.preferred_date) > selectedDate.value),
 )
 
-const completedAppointments = computed(() =>
-  normalizedAppointments.value.filter((a) => a.status_text === 'Completed'),
+const confirmedAppointments = computed(() =>
+  normalizedAppointments.value.filter((a) => a.status_text === 'Confirmed'),
 )
 
-const cancelledAppointments = computed(() =>
-  normalizedAppointments.value.filter((a) => a.status_text === 'Cancelled'),
+const pendingAppointments = computed(() =>
+  normalizedAppointments.value.filter((a) => a.status_text === 'Pending'),
+)
+
+const rescheduleAppointments = computed(() =>
+  normalizedAppointments.value.filter((a) => a.status_text === 'Reschedule'),
 )
 
 onMounted(() => {
@@ -212,9 +262,9 @@ function viewAppointment(a: NormalizedAppointment) {
 
             <v-col cols="12">
               <v-text-field
-                label="Applicant(s)"
+                label="Person Name"
                 :model-value="
-                  selectedAppointment.applicant_name ?? `Applicant ${selectedAppointment.person_id}`
+                  selectedAppointment.person_name ?? `Person ${selectedAppointment.person_id}`
                 "
                 readonly
                 variant="outlined"
@@ -224,7 +274,17 @@ function viewAppointment(a: NormalizedAppointment) {
 
             <v-col cols="12">
               <v-text-field
-                label="Service Type"
+                label="Person Contact"
+                :model-value="selectedAppointment.person_contact ?? '—'"
+                readonly
+                variant="outlined"
+                persistent-placeholder
+              />
+            </v-col>
+
+            <v-col cols="12">
+              <v-text-field
+                label="Service Name"
                 :model-value="
                   selectedAppointment.service_name ?? `Service ${selectedAppointment.service_id}`
                 "
@@ -234,9 +294,29 @@ function viewAppointment(a: NormalizedAppointment) {
               />
             </v-col>
 
+            <v-col cols="12">
+              <v-text-field
+                label="Service Description"
+                :model-value="selectedAppointment.service_description ?? '—'"
+                readonly
+                variant="outlined"
+                persistent-placeholder
+              />
+            </v-col>
+
+            <v-col cols="12">
+              <v-text-field
+                label="Service Category"
+                :model-value="selectedAppointment.service_category ?? '—'"
+                readonly
+                variant="outlined"
+                persistent-placeholder
+              />
+            </v-col>
+
             <v-col cols="6">
               <v-text-field
-                label="Date"
+                label="Preferred Date"
                 :model-value="formatDateTime(selectedAppointment.preferred_date)"
                 readonly
                 variant="outlined"
@@ -245,27 +325,21 @@ function viewAppointment(a: NormalizedAppointment) {
             </v-col>
 
             <v-col cols="6">
-              <v-text-field label="Time" :value="formatTime(selectedAppointment)" readonly />
-            </v-col>
-
-            <v-col cols="12">
               <v-text-field
-                label="Assigned Staff"
-                :model-value="
-                  selectedAppointment.assigned_staff ?? `Staff ${selectedAppointment.user_id}`
-                "
+                label="Time"
+                :model-value="formatTime(selectedAppointment)"
                 readonly
                 variant="outlined"
-                persistent-placeholder
               />
             </v-col>
 
             <v-col cols="12">
-              <v-select
-                label=""
-                :items="['Scheduled', 'Completed', 'Cancelled']"
-                :value="selectedAppointment.status_text"
+              <v-text-field
+                label="Status"
+                :model-value="selectedAppointment.status_text"
                 readonly
+                variant="outlined"
+                persistent-placeholder
               />
             </v-col>
 
@@ -282,9 +356,10 @@ function viewAppointment(a: NormalizedAppointment) {
             <v-col cols="12">
               <v-textarea
                 label="Notes / Special Instructions"
-                :value="selectedAppointment.notes ?? ''"
+                :model-value="selectedAppointment.notes ?? ''"
                 readonly
                 auto-grow
+                variant="outlined"
               />
             </v-col>
           </v-row>
@@ -394,32 +469,71 @@ function viewAppointment(a: NormalizedAppointment) {
         <b>{{ upcomingAppointments.length }}</b>
       </div>
       <div class="stat">
-        <span>Completed</span>
-        <b>{{ completedAppointments.length }}</b>
+        <span>Confirmed</span>
+        <b>{{ confirmedAppointments.length }}</b>
       </div>
       <div class="stat">
-        <span>Cancelled</span>
-        <b>{{ cancelledAppointments.length }}</b>
+        <span>Pending</span>
+        <b>{{ pendingAppointments.length }}</b>
+      </div>
+      <div class="stat">
+        <span>Reschedule</span>
+        <b>{{ rescheduleAppointments.length }}</b>
       </div>
     </div>
 
     <div class="schedule">
       <div class="calendar">
-        <v-date-picker v-model="selectedDate" :events="calendarEvents" hide-header />
+        <v-date-picker
+          v-model="selectedDate"
+          :events="calendarEvents"
+          hide-header
+          event-color="yellow"
+        />
       </div>
 
       <div class="details">
         <h4>Appointments for {{ selectedDateISO }}</h4>
 
-        <div v-for="a in todaysAppointments" :key="a.id" class="appointment">
-          <b>Applicant {{ a.person_id }}</b>
-          <p>Service: Service {{ a.service_id }}</p>
-          <p>Time: {{ formatTime(a) }}</p>
-          <p>Assigned Staff: Staff {{ a.user_id }}</p>
-          <span class="status">{{ a.status_text }}</span>
+        <div v-for="a in todaysAppointments" :key="a.id" class="appointment-detail-card">
+          <div class="appointment-detail-header">
+            <span class="status-pill" :class="a.status_text.toLowerCase()">{{
+              a.status_text
+            }}</span>
+            <span class="appointment-id">#{{ a.id }}</span>
+          </div>
+          <dl class="appointment-detail-fields">
+            <dt>Person Name</dt>
+            <dd>{{ a.person_name ?? `Person ${a.person_id}` }}</dd>
+            <dt>Person Contact</dt>
+            <dd>{{ a.person_contact ?? '—' }}</dd>
+            <dt>Service</dt>
+            <dd>{{ a.service_name ?? `Service ${a.service_id}` }}</dd>
+            <dt>Service Description</dt>
+            <dd>{{ a.service_description ?? '—' }}</dd>
+            <dt>Service Category</dt>
+            <dd>{{ a.service_category ?? '—' }}</dd>
+            <dt>Preferred Date & Time (local)</dt>
+            <dd>{{ formatDateTimeLocale(a.preferred_date) }}</dd>
+            <dt v-if="a.location">Location</dt>
+            <dd v-if="a.location">{{ a.location }}</dd>
+            <dt v-if="a.notes">Notes</dt>
+            <dd v-if="a.notes">{{ a.notes }}</dd>
+          </dl>
+          <v-btn
+            class="view-btn"
+            variant="tonal"
+            color="primary"
+            size="small"
+            @click="viewAppointment(a)"
+          >
+            View full details
+          </v-btn>
         </div>
 
-        <p v-if="!todaysAppointments.length">No appointments for this date.</p>
+        <p v-if="!todaysAppointments.length" class="no-appointments">
+          No appointments for this date.
+        </p>
       </div>
     </div>
 
@@ -455,7 +569,9 @@ function viewAppointment(a: NormalizedAppointment) {
         <div v-for="a in normalizedAppointments" :key="a.id" class="appointment-row">
           <div class="cell check"><input type="checkbox" /></div>
           <div class="cell id">{{ a.id }}</div>
-          <div class="cell applicant">{{ a.applicant_name ?? `Applicant ${a.person_id}` }}</div>
+          <div class="cell applicant">
+            {{ a.person_name ?? a.applicant_name ?? `Applicant ${a.person_id}` }}
+          </div>
           <div class="cell service">{{ a.service_name ?? `Service ${a.service_id}` }}</div>
           <div class="cell datetime">
             {{ formatDateTime(a.preferred_date) }}
@@ -505,7 +621,7 @@ function viewAppointment(a: NormalizedAppointment) {
 
 .stats {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 16px;
   margin-bottom: 24px;
 }
@@ -538,6 +654,56 @@ function viewAppointment(a: NormalizedAppointment) {
   padding: 14px;
   border-radius: 12px;
   margin-bottom: 12px;
+}
+
+.appointment-detail-card {
+  background: #eef5f9;
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  border: 1px solid #e0e7ef;
+}
+
+.appointment-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #d1d5db;
+}
+
+.appointment-detail-header .appointment-id {
+  font-variant-numeric: tabular-nums;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.appointment-detail-fields {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 6px 16px;
+  margin: 0 0 12px 0;
+  font-size: 0.9rem;
+}
+
+.appointment-detail-fields dt {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.appointment-detail-fields dd {
+  margin: 0;
+}
+
+.appointment-detail-card .view-btn {
+  margin-top: 8px;
+}
+
+.no-appointments {
+  color: #6b7280;
+  margin: 0;
+  font-size: 0.95rem;
 }
 
 .pill {
@@ -691,19 +857,19 @@ function viewAppointment(a: NormalizedAppointment) {
   font-weight: 600;
 }
 
-.status-pill.scheduled {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.status-pill.completed {
+.status-pill.confirmed {
   background: #dcfce7;
   color: #166534;
 }
 
-.status-pill.cancelled {
-  background: #fee2e2;
-  color: #991b1b;
+.status-pill.pending {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.status-pill.reschedule {
+  background: #dbeafe;
+  color: #1e40af;
 }
 .wrap-text input {
   white-space: normal !important;
