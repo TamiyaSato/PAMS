@@ -94,7 +94,7 @@ function resetForm() {
 async function fetchAppointments() {
   loading.value = true
   try {
-    const res = await api.get<Appointment[]>('/api/v1/appointments')
+    const res = await api.get<Appointment[]>('/api/v1/appointments/me')
     appointments.value = res.data
   } finally {
     loading.value = false
@@ -145,6 +145,14 @@ async function saveAppointment() {
 }
 
 const selectedDateISO = computed(() => selectedDate.value.toISOString().split('T')[0])
+
+/** Unique appointment dates (YYYY-MM-DD) for v-date-picker events */
+const calendarEvents = computed<string[]>(() => {
+  const dates = appointments.value
+    .map((a) => (a.preferred_date ? a.preferred_date.split('T')[0] : null))
+    .filter((d): d is string => d != null && d !== '')
+  return [...new Set(dates)]
+})
 
 const normalizedAppointments = computed<NormalizedAppointment[]>(() =>
   appointments.value.map((a) => {
@@ -292,13 +300,7 @@ function viewAppointment(a: NormalizedAppointment) {
     </v-dialog>
 
     <div class="header">
-      <div>
-        <h2>Hi, Admin!</h2>
-        <p>
-          <a href="#">Logged in as: [Admin] [Role]</a><br />
-          <a href="#">Last login: [date, time]</a>
-        </p>
-      </div>
+      <h2>Appointments & Schedule</h2>
 
       <div class="header-actions">
         <div class="search">
@@ -403,7 +405,7 @@ function viewAppointment(a: NormalizedAppointment) {
 
     <div class="schedule">
       <div class="calendar">
-        <v-date-picker v-model="selectedDate" />
+        <v-date-picker v-model="selectedDate" :events="calendarEvents" hide-header />
       </div>
 
       <div class="details">
