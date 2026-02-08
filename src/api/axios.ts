@@ -10,10 +10,15 @@ const api = axios.create({
   },
 })
 
+// Helper function to get token from either storage
+function getAuthToken(): string | null {
+  return sessionStorage.getItem('authToken') || localStorage.getItem('authToken')
+}
+
 // Request interceptor to add token to headers
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('authToken')
+    const token = getAuthToken()
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -29,8 +34,9 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid - clear auth and redirect to login
+      // Token expired or invalid - clear auth from both storages and redirect to login
       localStorage.removeItem('authToken')
+      sessionStorage.removeItem('authToken')
       window.location.href = '/member/login'
     }
     return Promise.reject(error)

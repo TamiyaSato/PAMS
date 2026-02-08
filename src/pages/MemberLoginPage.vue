@@ -54,10 +54,10 @@ const handleSubmit = async () => {
     const data = response.data
 
     if (data.token) {
-      if (remember.value) {
-        localStorage.setItem('authToken', data.token)
-      } else {
+      if (!remember.value) {
         sessionStorage.setItem('authToken', data.token)
+      } else {
+        localStorage.setItem('authToken', data.token)
       }
 
       authStore.login(data.token)

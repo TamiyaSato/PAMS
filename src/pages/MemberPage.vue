@@ -20,6 +20,7 @@ const displayName = computed(() => {
 const handleLogout = () => {
   logoutDialog.value = false
   localStorage.removeItem('authToken')
+  sessionStorage.removeItem('authToken')
   authStore.logout()
   router.push('/member/login')
 }

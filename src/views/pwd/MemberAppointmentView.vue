@@ -11,6 +11,7 @@ const logoutDialog = ref(false)
 const handleLogout = () => {
   logoutDialog.value = false
   localStorage.removeItem('authToken')
+  sessionStorage.removeItem('authToken')
   authStore.logout()
 }
 

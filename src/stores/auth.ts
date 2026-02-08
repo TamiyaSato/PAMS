@@ -5,20 +5,47 @@ export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = ref(false)
   const user = ref<{ oid: number; email: string; username: string; role: string } | null>(null)
 
-  // Check if user is logged in (e.g., check for token in localStorage)
-  function checkAuth() {
-    const token = localStorage.getItem('authToken')
-    isAuthenticated.value = !!token
-    user.value = decodeJwtManually(token as string)
+  // Helper function to get token from either storage
+  function getAuthToken(): string | null {
+    return sessionStorage.getItem('authToken') || localStorage.getItem('authToken')
+  }
 
-    return isAuthenticated.value
+  // Helper function to remove token from both storages
+  function removeAuthToken(): void {
+    localStorage.removeItem('authToken')
+    sessionStorage.removeItem('authToken')
+  }
+
+  // Check if user is logged in and token is still valid (not expired)
+  function checkAuth() {
+    const token = getAuthToken()
+    if (!token) {
+      isAuthenticated.value = false
+      user.value = null
+      return false
+    }
+    const decoded = decodeJwtManually(token)
+    if (!decoded) {
+      isAuthenticated.value = false
+      removeAuthToken()
+      return false
+    }
+    // Check JWT exp (seconds since epoch)
+    if (decoded.exp != null && decoded.exp * 1000 < Date.now()) {
+      isAuthenticated.value = false
+      user.value = null
+      removeAuthToken()
+      return false
+    }
+    isAuthenticated.value = true
+    user.value = decoded
+    return true
   }
 
   function login(token: string) {
     isAuthenticated.value = true
     user.value = decodeJwtManually(token)
-    // Store token if needed
-    localStorage.setItem('authToken', token)
+    // Token is already stored by the login page, so we don't need to store it here
   }
 
   function decodeJwtManually(token: string) {
@@ -35,7 +62,7 @@ export const useAuthStore = defineStore('auth', () => {
   function logout() {
     isAuthenticated.value = false
     user.value = null
-    localStorage.removeItem('authToken')
+    removeAuthToken()
   }
 
   // Initialize auth state

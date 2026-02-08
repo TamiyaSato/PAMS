@@ -16,6 +16,7 @@ const isLoading = ref(false)
 const form = ref(false)
 const username = ref(null)
 const password = ref(null)
+const remember = ref(false)
 
 const handleSubmit = async (event: Event) => {
   event.preventDefault()
@@ -36,8 +37,12 @@ const handleSubmit = async (event: Event) => {
     if (data.token) {
       successMessage.value = 'Login successful!'
 
-      // Store token and user data
-      localStorage.setItem('authToken', data.token)
+      // Store token based on remember me preference
+      if (!remember.value) {
+        sessionStorage.setItem('authToken', data.token)
+      } else {
+        localStorage.setItem('authToken', data.token)
+      }
 
       // Update auth store
       authStore.login(data.token)
@@ -102,7 +107,7 @@ function required(v: string) {
 
         <div class="form-footer">
           <label class="remember">
-            <input type="checkbox" id="remember" name="remember" value="1" />
+            <input type="checkbox" id="remember" name="remember" v-model="remember" />
             Remember me
           </label>
         </div>

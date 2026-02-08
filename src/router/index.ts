@@ -6,7 +6,8 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      redirect: '/member/login',
+      name: 'root',
+      redirect: () => ({ name: 'member-login' }), // fallback; guard below overrides by role
     },
     {
       path: '/admin/login',
@@ -161,28 +162,76 @@ router.beforeEach((to, from, next) => {
   const requiresAuth = to.meta.requiresAuth !== false
   const role = to.meta.role
 
-  if (requiresAuth && !authStore.isAuthenticated) {
+  // Root path: redirect by role if valid token, else to login
+  if (to.path === '/' || to.name === 'root') {
+    if (!authStore.isAuthenticated) {
+      next({ name: 'member-login' })
+      return
+    }
+    const userRole = authStore.user?.role
+    if (userRole === 'admin') {
+      next({ path: '/admin' })
+      return
+    }
+    if (userRole === 'member') {
+      next({ path: '/member' })
+      return
+    }
     next({ name: 'member-login' })
-  } else if (to.name === 'admin-login' && authStore.isAuthenticated) {
-    next({ name: 'admin' })
-  } else if (to.name === 'member-login' && authStore.isAuthenticated) {
-    next({ name: 'member' })
-  } else {
-    if (role) {
-      const userRole = authStore.user?.role
-      if (userRole) {
-        if (userRole !== role) {
-          next(false)
-        } else {
-          next()
-        }
-      } else {
-        next(false)
-      }
-    } else {
-      next()
+    return
+  }
+
+  // If trying to access login pages while authenticated, redirect to appropriate dashboard
+  if (to.name === 'admin-login' && authStore.isAuthenticated) {
+    const userRole = authStore.user?.role
+    if (userRole === 'admin') {
+      next({ path: '/admin' })
+      return
+    }
+    if (userRole === 'member') {
+      next({ path: '/member' })
+      return
     }
   }
+
+  if (to.name === 'member-login' && authStore.isAuthenticated) {
+    const userRole = authStore.user?.role
+    if (userRole === 'admin') {
+      next({ path: '/admin' })
+      return
+    }
+    if (userRole === 'member') {
+      next({ path: '/member' })
+      return
+    }
+  }
+
+  // Check if route requires authentication
+  if (requiresAuth && !authStore.isAuthenticated) {
+    next({ name: 'member-login' })
+    return
+  }
+
+  // Check role-based access
+  if (role) {
+    const userRole = authStore.user?.role
+    if (!userRole || userRole !== role) {
+      // User doesn't have required role, redirect based on their actual role
+      if (userRole === 'admin') {
+        next({ path: '/admin' })
+        return
+      }
+      if (userRole === 'member') {
+        next({ path: '/member' })
+        return
+      }
+      next({ name: 'member-login' })
+      return
+    }
+  }
+
+  // All checks passed, allow navigation
+  next()
 })
 
 export default router
