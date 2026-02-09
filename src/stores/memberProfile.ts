@@ -11,10 +11,21 @@ export const useMemberProfileStore = defineStore('memberProfile', {
 
   getters: {
     age: (state) => {
-      if (!state.profile) return null
-      const birthDate = new Date(state.profile.date_of_birth)
-      const diff = Date.now() - birthDate.getTime()
-      return Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25))
+      if (!state.profile || !state.profile.date_of_birth) return null
+
+      const dateString = state.profile.date_of_birth.split('T')[0]
+      const [year, month, day] = dateString!.split('-').map(Number)
+      if (isNaN(year!) || isNaN(month!) || isNaN(day!)) return null
+
+      const today = new Date()
+      let age = today.getFullYear() - year!
+      if (
+        today.getMonth() + 1 < month! ||
+        (today.getMonth() + 1 === month && today.getDate() < day!)
+      ) {
+        age--
+      }
+      return age
     },
 
     avatarUrl: (state) => state.profile?.avatar || '/default-avatar.png',

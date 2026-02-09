@@ -18,10 +18,18 @@ watch(
   (profile) => {
     if (profile) {
       formData.value = { ...profile }
+      formData.value.date_of_birth = toLocalDateString(new Date(formData.value.date_of_birth!))
     }
   },
   { immediate: true },
 )
+
+function toLocalDateString(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
 
 const saveProfileChanges = async () => {
   try {

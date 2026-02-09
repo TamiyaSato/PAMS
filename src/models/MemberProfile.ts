@@ -1,7 +1,7 @@
 export interface MemberProfile {
   id: number
   full_name: string
-  date_of_birth: Date
+  date_of_birth: string
   gender: string
   disability_type: string
   address: string
