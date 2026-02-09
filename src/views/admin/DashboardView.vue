@@ -439,7 +439,7 @@ async function updateApplicationStatus(id: number, status: number) {
   border-radius: 10px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   overflow: visible;
-  z-index: 999;
+  z-index: 1000 !important;
   min-width: 120px;
   display: flex;
   flex-direction: column;
