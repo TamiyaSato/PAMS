@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import api from '@/api/axios'
 
 const currentPassword = ref('')
 const newPassword = ref('')
@@ -31,15 +32,32 @@ const changePassword = async () => {
   loading.value = true
 
   try {
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    await api.post('/api/v1/persons/me/change-password', {
+      old_password: currentPassword.value,
+      new_password: newPassword.value,
+      confirm_password: confirmPassword.value,
+    })
 
     currentPassword.value = ''
     newPassword.value = ''
     confirmPassword.value = ''
 
     success.value = 'Password changed successfully'
-  } catch {
-    error.value = 'Failed to change password'
+  } catch (e: unknown) {
+    type ErrorWithResponse = {
+      response?: {
+        data?: {
+          message?: string
+        }
+      }
+    }
+
+    const err = e as ErrorWithResponse
+    if (err.response?.data?.message) {
+      error.value = err.response.data.message
+    } else {
+      error.value = 'Failed to change password'
+    }
   } finally {
     loading.value = false
   }

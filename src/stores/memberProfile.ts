@@ -1,18 +1,6 @@
 import { defineStore } from 'pinia'
 import type { MemberProfile } from '@/models/MemberProfile'
-
-const mockProfileData: MemberProfile = {
-  id: 1001,
-  full_name: 'Maria Santos',
-  date_of_birth: '1990-03-12',
-  gender: 'Female',
-  disability_type: 'Visual Impairment',
-  address: 'Purok 2',
-  contact_no: '09123456781',
-  status: 'Active',
-  date_registered: '2019-03-12',
-  email: 'maria.santos@email.com',
-}
+import api from '@/api/axios'
 
 export const useMemberProfileStore = defineStore('memberProfile', {
   state: () => ({
@@ -37,11 +25,27 @@ export const useMemberProfileStore = defineStore('memberProfile', {
       this.loading = true
       this.error = ''
       try {
-        // Simulate API delay
-        await new Promise((resolve) => setTimeout(resolve, 500))
+        const { data } = await api.get('/api/v1/persons/me')
 
-        // Assign mock data
-        this.profile = mockProfileData
+        // Map API response to MemberProfile shape
+        this.profile = {
+          id: data.id,
+          full_name: data.full_name,
+          date_of_birth: data.date_of_birth,
+          gender: data.gender,
+          disability_type: data.disability_type,
+          address: data.address,
+          contact_no: data.contact_no,
+          status:
+            typeof data.status === 'number'
+              ? data.status === 1
+                ? 'Active'
+                : 'Inactive'
+              : String(data.status),
+          date_registered: data.date_registered,
+          email: data.email,
+          avatar: undefined,
+        }
       } catch (err: unknown) {
         if (err instanceof Error) {
           this.error = err.message
@@ -56,20 +60,42 @@ export const useMemberProfileStore = defineStore('memberProfile', {
     },
 
     async updateProfile(payload: Partial<MemberProfile>) {
-      if (!this.profile) {
-        this.error = 'No profile loaded to update'
-        return
-      }
-
       this.loading = true
       this.error = ''
 
       try {
-        // Simulate API delay
-        await new Promise((resolve) => setTimeout(resolve, 500))
+        const body = {
+          id: payload.id ?? this.profile?.id,
+          full_name: payload.full_name ?? this.profile?.full_name,
+          date_of_birth: payload.date_of_birth ?? this.profile?.date_of_birth,
+          gender: payload.gender ?? this.profile?.gender,
+          disability_type: payload.disability_type ?? this.profile?.disability_type,
+          address: payload.address ?? this.profile?.address,
+          contact_no: payload.contact_no ?? this.profile?.contact_no,
+          email: payload.email ?? this.profile?.email,
+        }
 
-        // Update mock locally
-        Object.assign(this.profile, payload)
+        const { data } = await api.put('/api/v1/persons/me', body)
+
+        // Refresh local profile from API response
+        this.profile = {
+          id: data.id,
+          full_name: data.full_name,
+          date_of_birth: data.date_of_birth,
+          gender: data.gender,
+          disability_type: data.disability_type,
+          address: data.address,
+          contact_no: data.contact_no,
+          status:
+            typeof data.status === 'number'
+              ? data.status === 1
+                ? 'Active'
+                : 'Inactive'
+              : String(data.status),
+          date_registered: data.date_registered,
+          email: data.email,
+          avatar: this.profile?.avatar,
+        }
       } catch (err: unknown) {
         if (err instanceof Error) {
           this.error = err.message
