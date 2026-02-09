@@ -1,25 +1,160 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import api from '@/api/axios'
 import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
 authStore.checkAuth()
 
-const isAuthenticated = computed(() => authStore.isAuthenticated)
-const logoutDialog = ref(false)
-
-const handleLogout = () => {
-  logoutDialog.value = false
-  localStorage.removeItem('authToken')
-  sessionStorage.removeItem('authToken')
-  authStore.logout()
+interface AppointmentResponse {
+  id: number
+  person_id: number
+  service_id: number
+  preferred_date: string
+  status: number
+  user_id: number
+  location: string | null
+  notes: string | null
+  person_name?: string
+  person_contact?: string
+  service_name?: string
+  service_description?: string
+  service_category?: string
 }
 
-const selectedDate = ref('2026-02-25')
+const appointment = ref<AppointmentResponse | null>(null)
+const loading = ref(false)
+const error = ref('')
+const confirmLoading = ref(false)
+
+const selectedDate = ref<string | null>(null)
+const bookedDate = ref<string | null>(null)
+
+const STATUS_TEXT: Record<number, string> = {
+  1: 'Confirmed',
+  2: 'Pending Confirmation',
+  3: 'Reschedule Requested',
+}
+
+function formatFullDateTime(iso: string | null | undefined) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  const dateStr = d.toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    weekday: 'long',
+  })
+  const timeStr = d.toLocaleTimeString(undefined, {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  })
+  return `${dateStr} · ${timeStr}`
+}
+
+function toLocalDateString(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+function formatDate(iso: string | null | undefined) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  return d.toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
+}
+
+function formatTime(iso: string | null | undefined) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  return d.toLocaleTimeString(undefined, {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  })
+}
+
+const hasAppointment = computed(() => !!appointment.value)
+
+const statusText = computed(() =>
+  appointment.value ? (STATUS_TEXT[appointment.value.status] ?? 'Pending Confirmation') : '',
+)
+
+const headerTitle = computed(() => appointment.value?.service_name || 'Scheduled Appointment')
+
+const headerDateTime = computed(() =>
+  appointment.value ? formatFullDateTime(appointment.value.preferred_date) : '',
+)
+
+const headerWithStaff = computed(() => {
+  if (!appointment.value) return ''
+  if (appointment.value.location) return `Location: ${appointment.value.location}`
+  return appointment.value.person_name ? `For: ${appointment.value.person_name}` : ''
+})
+
+const detailDate = computed(() =>
+  appointment.value ? formatDate(appointment.value.preferred_date) : '',
+)
+
+const detailTime = computed(() =>
+  appointment.value ? formatTime(appointment.value.preferred_date) : '',
+)
+
+const detailService = computed(() => appointment.value?.service_name || '—')
+
+async function confirmAttendance() {
+  if (!appointment.value) return
+
+  confirmLoading.value = true
+  try {
+    await api.put(`/api/v1/appointments/${appointment.value.id}`, {
+      status: 1,
+    })
+
+    appointment.value = {
+      ...appointment.value,
+      status: 1,
+    }
+  } catch (e) {
+    console.error('Failed to confirm appointment', e)
+  } finally {
+    confirmLoading.value = false
+    location.reload()
+  }
+}
+
+onMounted(async () => {
+  loading.value = true
+  error.value = ''
+  try {
+    const { data } = await api.get<AppointmentResponse[]>('/api/v1/appointments/persons/me', {
+      params: { top: 1 },
+    })
+
+    const first = Array.isArray(data) ? data[0] : null
+    appointment.value = first ?? null
+
+    if (first?.preferred_date) {
+      // Use date-only (YYYY-MM-DD) for date picker binding
+      bookedDate.value = toLocalDateString(new Date(first.preferred_date))
+    }
+  } catch (e) {
+    console.error('Failed to fetch latest appointment', e)
+    error.value = 'Failed to load your latest appointment.'
+  } finally {
+    loading.value = false
+  }
+})
 </script>
 
 <template>
-  <v-layout>
+  <v-layout style="min-height: 100vh">
     <v-main>
       <v-app-bar flat title="Appointments" />
 
@@ -27,23 +162,35 @@ const selectedDate = ref('2026-02-25')
         <v-row>
           <v-col cols="12">
             <v-card class="pending-card">
-              <h3 class="section-title">Pending Confirmation</h3>
-              <p class="section-subtitle">
+              <h3 class="section-title">
+                <span v-if="hasAppointment">{{ statusText || 'Pending Confirmation' }}</span>
+                <span v-else>No Pending Confirmation</span>
+              </h3>
+              <p class="section-subtitle" v-if="hasAppointment">
                 An administrator has scheduled the following visit for you. Please confirm your
                 attendance.
               </p>
 
-              <v-row class="align-start mt-4">
+              <v-row v-if="hasAppointment" class="align-start mt-4">
                 <v-col cols="12" md="8">
                   <div class="highlight">
-                    <strong>Wheelchair Fitting</strong>
-                    <div>Wednesday, February 25, 2026 · 10:00 AM</div>
-                    <div>With staff: Liza Ramos</div>
+                    <strong>{{ headerTitle }}</strong>
+                    <div>{{ headerDateTime }}</div>
+                    <div v-if="headerWithStaff">{{ headerWithStaff }}</div>
                   </div>
                 </v-col>
 
                 <v-col cols="12" md="4">
-                  <v-btn color="#028a5c" block class="mb-2 btn-confirm"> Confirm Attendance </v-btn>
+                  <v-btn
+                    color="#028a5c"
+                    block
+                    class="mb-2 btn-confirm"
+                    :loading="confirmLoading"
+                    :disabled="confirmLoading"
+                    @click="confirmAttendance"
+                  >
+                    Confirm Attendance
+                  </v-btn>
                   <v-btn color="#8f8f91" block class="btn-reschedule"> Request Reschedule </v-btn>
                 </v-col>
               </v-row>
@@ -51,7 +198,7 @@ const selectedDate = ref('2026-02-25')
           </v-col>
         </v-row>
 
-        <v-row class="mt-6">
+        <v-row class="mt-6" v-if="hasAppointment">
           <v-col cols="12" md="6">
             <v-card class="calendar-card">
               <v-date-picker
@@ -59,6 +206,8 @@ const selectedDate = ref('2026-02-25')
                 color="primary"
                 show-adjacent-months
                 hide-header
+                :events="[bookedDate!]"
+                event-color="yellow"
               />
             </v-card>
           </v-col>
@@ -68,23 +217,18 @@ const selectedDate = ref('2026-02-25')
               <div class="details-title">Appointment Details</div>
 
               <div class="details-row">
-                <span class="label">Staff</span>
-                <span class="value">Liza Ramos</span>
-              </div>
-
-              <div class="details-row">
                 <span class="label">Date</span>
-                <span class="value">{{ selectedDate }}</span>
+                <span class="value">{{ detailDate }}</span>
               </div>
 
               <div class="details-row">
                 <span class="label">Time</span>
-                <span class="value">10:00 AM</span>
+                <span class="value">{{ detailTime }}</span>
               </div>
 
               <div class="details-row">
                 <span class="label">Service</span>
-                <span class="value">Wheelchair Fitting</span>
+                <span class="value">{{ detailService }}</span>
               </div>
 
               <v-divider class="my-4" />
@@ -140,19 +284,6 @@ const selectedDate = ref('2026-02-25')
           </v-col>
         </v-row>
       </v-container>
-
-      <v-dialog v-if="isAuthenticated" v-model="logoutDialog" max-width="420" persistent>
-        <v-card class="logout-card">
-          <v-card-title class="logout-title">Confirm Logout</v-card-title>
-          <v-card-text class="logout-text"> Are you sure you want to log out? </v-card-text>
-          <v-card-actions class="logout-actions">
-            <div class="logout-btn-wrapper">
-              <v-btn class="btn-no" @click="logoutDialog = false">NO</v-btn>
-              <v-btn class="btn-yes" @click="handleLogout">YES</v-btn>
-            </div>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
     </v-main>
   </v-layout>
 </template>
