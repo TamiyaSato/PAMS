@@ -129,7 +129,6 @@ const handleSubmit = async () => {
               <input type="checkbox" v-model="remember" />
               <span>Remember me</span>
             </label>
-            <RouterLink class="reset" to="/forgot-password">Forgot Password?</RouterLink>
           </div>
 
           <button class="login-btn" :disabled="!form || isLoading">
