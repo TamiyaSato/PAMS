@@ -1,35 +1,97 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import api from '@/api/axios'
+import { computed, onMounted, ref } from 'vue'
+import type { applicationResponse } from '@/models/serviceResponse'
+
+interface AppointmentResponse {
+  id: number
+  preferred_date: string
+  location: string | null
+  service_name?: string
+}
 
 const viewStat = (type: string) => {
   console.log('Viewing:', type)
 }
 
-const applications = ref([
-  {
-    ref: '001',
-    service: 'Wheelchair Distribution',
-    status: 'VIEWED',
-  },
-  {
-    ref: '002',
-    service: 'Wheelchair Distribution',
-    status: 'SUBMITTED',
-  },
-  {
-    ref: '003',
-    service: 'Wheelchair Distribution',
-    status: 'ACTIVE',
-  },
-])
+const applications = ref<applicationResponse[]>([])
+const nextAppointment = ref<AppointmentResponse | null>(null)
+const appointmentError = ref('')
+
+function statusLabel(status: number) {
+  switch (status) {
+    case 1:
+      return 'In Progress'
+    case 2:
+      return 'Approved'
+    case 3:
+      return 'Declined'
+    default:
+      return 'Cancelled'
+  }
+}
+
+function statusClass(status: number) {
+  switch (status) {
+    case 1:
+      return 'progress'
+    case 2:
+      return 'approved'
+    case 3:
+      return 'declined'
+    default:
+      return 'cancelled'
+  }
+}
+
+function formatDateTime(iso?: string | null) {
+  if (!iso) return ''
+  return new Date(iso).toLocaleString(undefined, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  })
+}
+
+async function fetchApplications() {
+  try {
+    const res = await api.get<applicationResponse[]>('/api/v1/transactions/me?top=3')
+    applications.value = res.data
+  } catch (e) {
+    console.error('Error fetching applications:', e)
+  }
+}
+
+async function fetchNextAppointment() {
+  appointmentError.value = ''
+  try {
+    const { data } = await api.get<AppointmentResponse | AppointmentResponse[]>(
+      '/api/v1/appointments/persons/me/next',
+    )
+    nextAppointment.value = Array.isArray(data) ? (data[0] ?? null) : data
+  } catch (e) {
+    appointmentError.value = 'Failed to load next appointment.'
+    console.error('Error fetching appointment:', e)
+  }
+}
+
+const appointmentDateTime = computed(() =>
+  nextAppointment.value ? formatDateTime(nextAppointment.value.preferred_date) : '',
+)
+
+const appointmentLocation = computed(() => nextAppointment.value?.location || 'TBD')
 
 const applyService = (service: string) => {
   console.log('Applying for:', service)
 }
 
-const manageAppointments = () => {
-  console.log('Manage appointments clicked')
-}
+onMounted(() => {
+  fetchApplications()
+  fetchNextAppointment()
+})
 </script>
 
 <template>
@@ -68,19 +130,21 @@ const manageAppointments = () => {
             <a href="#">View full status page</a>
           </div>
 
-          <div class="status-row" v-for="(app, index) in applications" :key="index">
+          <div class="status-row" v-for="app in applications" :key="app.id">
             <v-avatar size="36" color="green">
               <v-icon color="white" size="18">accessible</v-icon>
             </v-avatar>
 
             <div class="status-info">
-              <strong>Ref. #{{ app.ref }}</strong>
+              <strong>Ref. #{{ app.id }}</strong>
               <small>Reference Number</small>
-              <span>{{ app.service }}</span>
+              <span>{{ app.name }}</span>
               <small>Service Name</small>
             </div>
 
-            <span class="badge viewed">{{ app.status }}</span>
+            <span class="badge" :class="statusClass(app.status)">
+              {{ statusLabel(app.status) }}
+            </span>
           </div>
         </v-card>
 
@@ -110,25 +174,15 @@ const manageAppointments = () => {
       </v-col>
 
       <v-col cols="12" md="4">
-        <v-card class="card center">
-          <h3>My Queue #</h3>
-          <div class="queue-oval">PWD-014</div>
-
-          <p class="queue-desc">
-            EYEGLASSES SCREENING<br />
-            December 15, 2025<br />
-            at 8:00 AM
-          </p>
-        </v-card>
-
         <v-card class="card mt">
           <h3>Appointments</h3>
           <p><strong>Next Appointment:</strong></p>
-          <ul>
-            <li>Date/Time: December 15, 2025 at 8 AM</li>
-            <li>Visit: Barangay Sampaloc 2</li>
+          <p v-if="appointmentError">{{ appointmentError }}</p>
+          <ul v-else-if="nextAppointment">
+            <li>Date/Time: {{ appointmentDateTime }}</li>
+            <li>Location: {{ appointmentLocation }}</li>
           </ul>
-          <button class="primary" @click="manageAppointments">Manage Appointments Here</button>
+          <p v-else>No upcoming appointment.</p>
         </v-card>
 
         <v-card class="card mt">
@@ -149,6 +203,7 @@ const manageAppointments = () => {
 .dashboard {
   background: #f4f7fb;
   padding: 24px;
+  min-height: 100vh;
 }
 
 .top-bar {
@@ -252,25 +307,16 @@ const manageAppointments = () => {
   font-weight: 700;
 }
 
-.viewed,
-.submitted,
-.active {
+.progress,
+.approved,
+.declined,
+.cancelled {
   color: #2563eb;
 }
 
 .badge {
   margin-left: auto;
   font-weight: 600;
-}
-
-.viewed {
-  color: #2563eb;
-}
-.submitted {
-  color: #2563eb;
-}
-.active {
-  color: #2563eb;
 }
 
 .services {

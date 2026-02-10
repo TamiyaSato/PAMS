@@ -132,9 +132,8 @@ async function saveReschedule() {
 
   rescheduleLoading.value = true
   try {
-    await api.put(`/api/v1/appointments/${appointment.value.id}`, {
+    await api.put(`/api/v1/appointments/${appointment.value.id}/status/reschedule`, {
       preferred_date: rescheduleDate.value,
-      status: 3,
     })
 
     appointment.value.preferred_date = rescheduleDate.value
