@@ -70,9 +70,6 @@ function formatDateTime(iso?: string | null) {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
   })
 }
 
@@ -199,7 +196,7 @@ onMounted(() => {
           <p><strong>Next Appointment:</strong></p>
           <p v-if="appointmentError">{{ appointmentError }}</p>
           <ul v-else-if="nextAppointment">
-            <li>Date/Time: {{ appointmentDateTime }}</li>
+            <li>Date: {{ appointmentDateTime }}</li>
             <li>Location: {{ appointmentLocation }}</li>
           </ul>
           <p v-else>No upcoming appointment.</p>

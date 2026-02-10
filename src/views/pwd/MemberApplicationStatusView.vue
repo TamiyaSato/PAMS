@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import api from '@/api/axios'
 import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import TableLoading from '@/components/TableLoading.vue'
 import type { applicationResponse } from '@/models/serviceResponse'
 type AppTab = 'In Progress' | 'Completed' | 'Declined'
+
+const route = useRoute()
 
 const activeTab = ref<AppTab>('In Progress')
 const applications = ref<applicationResponse[]>([])
@@ -51,7 +54,17 @@ async function fetchApplications() {
   }
 }
 
-onMounted(fetchApplications)
+onMounted(() => {
+  const tab = route.query.tab
+  if (typeof tab === 'string') {
+    const normalized = tab.toLowerCase()
+    if (normalized === 'completed') {
+      activeTab.value = 'Completed'
+    }
+  }
+
+  fetchApplications()
+})
 </script>
 
 <template>
