@@ -27,6 +27,10 @@ const loading = ref(false)
 const error = ref('')
 const confirmLoading = ref(false)
 
+const rescheduleDialog = ref(false)
+const rescheduleLoading = ref(false)
+const rescheduleDate = ref<string | null>(null)
+
 const selectedDate = ref<string | null>(null)
 const bookedDate = ref<string | null>(null)
 
@@ -36,21 +40,17 @@ const STATUS_TEXT: Record<number, string> = {
   3: 'Reschedule Requested',
 }
 
-function formatFullDateTime(iso: string | null | undefined) {
+function formatFullDateTime(iso?: string | null) {
   if (!iso) return ''
-  const d = new Date(iso)
-  const dateStr = d.toLocaleDateString(undefined, {
+  return new Date(iso).toLocaleString(undefined, {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
     weekday: 'long',
-  })
-  const timeStr = d.toLocaleTimeString(undefined, {
     hour: 'numeric',
     minute: '2-digit',
     hour12: true,
   })
-  return `${dateStr} · ${timeStr}`
 }
 
 function toLocalDateString(d: Date): string {
@@ -60,20 +60,18 @@ function toLocalDateString(d: Date): string {
   return `${y}-${m}-${day}`
 }
 
-function formatDate(iso: string | null | undefined) {
+function formatDate(iso?: string | null) {
   if (!iso) return ''
-  const d = new Date(iso)
-  return d.toLocaleDateString(undefined, {
+  return new Date(iso).toLocaleDateString(undefined, {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
   })
 }
 
-function formatTime(iso: string | null | undefined) {
+function formatTime(iso?: string | null) {
   if (!iso) return ''
-  const d = new Date(iso)
-  return d.toLocaleTimeString(undefined, {
+  return new Date(iso).toLocaleTimeString(undefined, {
     hour: 'numeric',
     minute: '2-digit',
     hour12: true,
@@ -82,9 +80,7 @@ function formatTime(iso: string | null | undefined) {
 
 const hasAppointment = computed(() => !!appointment.value)
 
-const statusText = computed(() =>
-  appointment.value ? (STATUS_TEXT[appointment.value.status] ?? 'Pending Confirmation') : '',
-)
+const statusText = computed(() => (appointment.value ? STATUS_TEXT[appointment.value.status] : ''))
 
 const headerTitle = computed(() => appointment.value?.service_name || 'Scheduled Appointment')
 
@@ -116,15 +112,38 @@ async function confirmAttendance() {
     await api.put(`/api/v1/appointments/${appointment.value.id}`, {
       status: 1,
     })
-
-    appointment.value = {
-      ...appointment.value,
-      status: 1,
-    }
-  } catch (e) {
-    console.error('Failed to confirm appointment', e)
+    appointment.value.status = 1
+  } catch {
+    console.error('Failed to confirm appointment')
   } finally {
     confirmLoading.value = false
+    location.reload()
+  }
+}
+
+function openReschedule() {
+  if (!appointment.value) return
+  rescheduleDate.value = toLocalDateString(new Date(appointment.value.preferred_date))
+  rescheduleDialog.value = true
+}
+
+async function saveReschedule() {
+  if (!appointment.value || !rescheduleDate.value) return
+
+  rescheduleLoading.value = true
+  try {
+    await api.put(`/api/v1/appointments/${appointment.value.id}`, {
+      preferred_date: rescheduleDate.value,
+      status: 3,
+    })
+
+    appointment.value.preferred_date = rescheduleDate.value
+    appointment.value.status = 3
+    rescheduleDialog.value = false
+  } catch {
+    console.error('Failed to reschedule appointment')
+  } finally {
+    rescheduleLoading.value = false
     location.reload()
   }
 }
@@ -137,16 +156,13 @@ onMounted(async () => {
       params: { top: 1 },
     })
 
-    const first = Array.isArray(data) ? data[0] : null
-    appointment.value = first ?? null
+    appointment.value = data?.[0] ?? null
 
-    if (first?.preferred_date) {
-      // Use date-only (YYYY-MM-DD) for date picker binding
-      bookedDate.value = toLocalDateString(new Date(first.preferred_date))
+    if (appointment.value?.preferred_date) {
+      bookedDate.value = toLocalDateString(new Date(appointment.value.preferred_date))
     }
-  } catch (e) {
-    console.error('Failed to fetch latest appointment', e)
-    error.value = 'Failed to load your latest appointment.'
+  } catch {
+    error.value = 'Failed to load appointment.'
   } finally {
     loading.value = false
   }
@@ -163,15 +179,15 @@ onMounted(async () => {
           <v-col cols="12">
             <v-card class="pending-card">
               <h3 class="section-title">
-                <span v-if="hasAppointment">{{ statusText || 'Pending Confirmation' }}</span>
-                <span v-else>No Pending Confirmation</span>
+                <span v-if="hasAppointment">{{ statusText }}</span>
+                <span v-else>No Pending Appointment</span>
               </h3>
               <p class="section-subtitle" v-if="hasAppointment">
                 An administrator has scheduled the following visit for you. Please confirm your
                 attendance.
               </p>
 
-              <v-row v-if="hasAppointment" class="align-start mt-4">
+              <v-row v-if="hasAppointment" class="mt-4">
                 <v-col cols="12" md="8">
                   <div class="highlight">
                     <strong>{{ headerTitle }}</strong>
@@ -182,16 +198,17 @@ onMounted(async () => {
 
                 <v-col cols="12" md="4">
                   <v-btn
-                    color="#028a5c"
                     block
                     class="mb-2 btn-confirm"
                     :loading="confirmLoading"
-                    :disabled="confirmLoading"
                     @click="confirmAttendance"
                   >
                     Confirm Attendance
                   </v-btn>
-                  <v-btn color="#8f8f91" block class="btn-reschedule"> Request Reschedule </v-btn>
+
+                  <v-btn block class="btn-reschedule" @click="openReschedule">
+                    Request Reschedule
+                  </v-btn>
                 </v-col>
               </v-row>
             </v-card>
@@ -203,8 +220,6 @@ onMounted(async () => {
             <v-card class="calendar-card">
               <v-date-picker
                 v-model="selectedDate"
-                color="primary"
-                show-adjacent-months
                 hide-header
                 :events="[bookedDate!]"
                 event-color="yellow"
@@ -269,7 +284,7 @@ onMounted(async () => {
                     </td>
                     <td>#001</td>
                     <td>Wheelchair Fitting</td>
-                    <td>February 25, 2026 10:00 AM</td>
+                    <td>February 25, 2026 · 10:00 AM</td>
                     <td>Liza Ramos</td>
                     <td>
                       <v-chip color="#10B981" size="small">Approved</v-chip>
@@ -284,6 +299,29 @@ onMounted(async () => {
           </v-col>
         </v-row>
       </v-container>
+
+      <v-dialog v-model="rescheduleDialog" max-width="420">
+        <v-card>
+          <v-card-title class="font-weight-bold"> Request Reschedule </v-card-title>
+
+          <v-card-text>
+            <v-date-picker v-model="rescheduleDate" />
+          </v-card-text>
+
+          <v-card-actions class="justify-end">
+            <v-btn variant="text" @click="rescheduleDialog = false"> Cancel </v-btn>
+
+            <v-btn
+              color="primary"
+              :loading="rescheduleLoading"
+              :disabled="!rescheduleDate"
+              @click="saveReschedule"
+            >
+              Save
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
     </v-main>
   </v-layout>
 </template>
