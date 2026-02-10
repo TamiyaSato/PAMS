@@ -3,15 +3,35 @@ import api from '@/api/axios'
 import { computed, onMounted, ref } from 'vue'
 import type { applicationResponse } from '@/models/serviceResponse'
 
+import { useRouter } from 'vue-router'
+const router = useRouter()
+
+const goToStatusPage = () => {
+  router.push({ name: 'member-status' })
+}
+
+const goToActiveApplications = () => {
+  router.push({
+    name: 'member-status',
+    query: { tab: 'progress' },
+  })
+}
+
+const goToCompletedApplications = () => {
+  router.push({
+    name: 'member-status',
+    query: { tab: 'completed' },
+  })
+}
+const goToAppointments = () => {
+  router.push({ name: 'member-appointments' })
+}
+
 interface AppointmentResponse {
   id: number
   preferred_date: string
   location: string | null
   service_name?: string
-}
-
-const viewStat = (type: string) => {
-  console.log('Viewing:', type)
 }
 
 const applications = ref<applicationResponse[]>([])
@@ -106,19 +126,19 @@ onMounted(() => {
       <div class="stat-pill">
         <v-icon class="stat-icon">description</v-icon>
         <span class="stat-title">Active Applications</span>
-        <button class="stat-btn" @click="viewStat('applications')">View More</button>
+        <button class="stat-btn" @click="goToActiveApplications">View More</button>
       </div>
 
       <div class="stat-pill">
         <v-icon class="stat-icon">check_circle</v-icon>
         <span class="stat-title">Approved Services</span>
-        <button class="stat-btn" @click="viewStat('approved')">View More</button>
+        <button class="stat-btn" @click="goToCompletedApplications">View More</button>
       </div>
 
       <div class="stat-pill">
         <v-icon class="stat-icon">event</v-icon>
         <span class="stat-title">Next Appointment</span>
-        <button class="stat-btn" @click="viewStat('appointment')">View More</button>
+        <button class="stat-btn" @click="goToAppointments">View More</button>
       </div>
     </div>
 
@@ -127,7 +147,7 @@ onMounted(() => {
         <v-card class="card">
           <div class="card-header">
             <h3>Application Status</h3>
-            <a href="#">View full status page</a>
+            <a href="#" @click.prevent="goToStatusPage">View full status page</a>
           </div>
 
           <div class="status-row" v-for="app in applications" :key="app.id">
