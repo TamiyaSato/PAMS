@@ -102,7 +102,10 @@ const appointmentDateTime = computed(() =>
 const appointmentLocation = computed(() => nextAppointment.value?.location || 'TBD')
 
 const applyService = (service: string) => {
-  console.log('Applying for:', service)
+  router.push({
+    name: 'member-services',
+    query: { service },
+  })
 }
 
 onMounted(() => {
@@ -172,19 +175,19 @@ onMounted(() => {
             <div class="service">
               <v-icon>card_giftcard</v-icon>
               <strong>CHRISTMAS PACKAGE</strong>
-              <button @click="applyService('Christmas Package')">Apply Here</button>
+              <button @click="applyService('christmas')">Apply Here</button>
             </div>
 
             <div class="service">
               <v-icon>visibility</v-icon>
               <strong>EYEGLASSES</strong>
-              <button @click="applyService('Eyeglasses')">Apply Here</button>
+              <button @click="applyService('eyeglasses')">Apply Here</button>
             </div>
 
             <div class="service">
               <v-icon>fitness_center</v-icon>
               <strong>PROSTHETIC</strong>
-              <button @click="applyService('Prosthetic')">Apply Here</button>
+              <button @click="applyService('prosthetic')">Apply Here</button>
             </div>
           </div>
         </v-card>
