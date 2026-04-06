@@ -1,24 +1,17 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import api from '@/api/axios'
+import type { serviceResponse } from '@/models/serviceResponse'
 
 // ---- Types ----
 interface ServiceHistoryEntry {
   id: number
-  service_id: number
   service_name: string
   service_category: string
   service_description: string
-  person_id: number
-  person_name: string
-  person_disability_type: string
-  person_contact: string
-  status: number
-  applied_at: string
-  approved_at: string | null
-  completed_at: string | null
-  notes: string | null
-  documents: string[]
+  service_requirements: string
+  status: string
+  date_created: string
   thumbnail?: string
 }
 
@@ -30,7 +23,7 @@ const activeTab = ref('All')
 const selectedEntry = ref<ServiceHistoryEntry | null>(null)
 const detailDialog = ref(false)
 
-const tabs = ['All', 'Completed', 'Approved', 'Pending', 'Denied']
+const tabs = ['All', 'Active', 'Draft', 'Archived']
 
 // ---- Category color & icon maps ----
 const categoryColors: Record<string, string> = {
@@ -76,19 +69,17 @@ const categoryImages: Record<string, string> = {
 const filteredEntries = computed(() => {
   let list = historyEntries.value
 
-  if (activeTab.value === 'Completed') list = list.filter((e) => e.status === 4)
-  else if (activeTab.value === 'Approved') list = list.filter((e) => e.status === 2)
-  else if (activeTab.value === 'Pending') list = list.filter((e) => e.status === 1)
-  else if (activeTab.value === 'Denied') list = list.filter((e) => e.status === 3)
+  if (activeTab.value === 'Active') list = list.filter((e) => e.status === 'Active')
+  else if (activeTab.value === 'Draft') list = list.filter((e) => e.status === 'Draft')
+  else if (activeTab.value === 'Archived') list = list.filter((e) => e.status === 'Archived')
 
   if (searchQuery.value.trim()) {
     const q = searchQuery.value.toLowerCase()
     list = list.filter(
       (e) =>
         e.service_name.toLowerCase().includes(q) ||
-        e.person_name.toLowerCase().includes(q) ||
         e.service_category.toLowerCase().includes(q) ||
-        e.person_disability_type.toLowerCase().includes(q),
+        e.service_description.toLowerCase().includes(q),
     )
   }
 
@@ -97,37 +88,36 @@ const filteredEntries = computed(() => {
 
 const totalStats = computed(() => {
   const total = historyEntries.value.length
-  const approved = historyEntries.value.filter((e) => e.status === 2).length
-  const pending = historyEntries.value.filter((e) => e.status === 1).length
-  const denied = historyEntries.value.filter((e) => e.status === 3).length
-  const completed = historyEntries.value.filter((e) => e.status === 4).length
-  return { total, approved, pending, denied, completed }
+  const active = historyEntries.value.filter((e) => e.status === 'Active').length
+  const draft = historyEntries.value.filter((e) => e.status === 'Draft').length
+  const archived = historyEntries.value.filter((e) => e.status === 'Archived').length
+  return { total, active, draft, archived }
 })
 
 // ---- Helpers ----
-function statusLabel(status: number): string {
-  switch (status) {
+function statusLabel(active: number): string {
+  switch (active) {
+    case 1:
+      return 'Active'
     case 2:
-      return 'Approved'
+      return 'Draft'
     case 3:
-      return 'Denied'
-    case 4:
-      return 'Completed'
+      return 'Archived'
     default:
-      return 'Pending'
+      return 'Unknown'
   }
 }
 
-function statusColor(status: number): string {
-  switch (status) {
-    case 2:
+function statusColor(active: number): string {
+  switch (active) {
+    case 1:
       return 'success'
-    case 3:
-      return 'error'
-    case 4:
-      return 'info'
-    default:
+    case 2:
       return 'warning'
+    case 3:
+      return 'grey'
+    default:
+      return 'grey'
   }
 }
 
@@ -197,163 +187,112 @@ function openDetail(entry: ServiceHistoryEntry | null) {
 async function fetchServiceHistory() {
   loading.value = true
   try {
-    const res = await api.get<unknown[]>('/api/v1/transactions')
-    let data = Array.isArray(res.data) ? (res.data as Record<string, unknown>[]) : []
+    const res = await api.get<serviceResponse[]>('/api/v1/service-types')
+    const data = Array.isArray(res.data) ? res.data : []
 
     if (data.length === 0) {
-      data = getMockHistoryData()
+      historyEntries.value = getMockServiceData()
+    } else {
+      historyEntries.value = data.map((item) => ({
+        id: Number(item.id) || 0,
+        service_name: String(item.name ?? ''),
+        service_category: String(item.category ?? ''),
+        service_description: String(item.description ?? ''),
+        service_requirements: String(item.requirements ?? ''),
+        status: item.active === 1 ? 'Active' : item.active === 2 ? 'Draft' : 'Archived',
+        date_created: String(item.date_created ?? ''),
+      }))
     }
-
-    historyEntries.value = data.map((item) => ({
-      id: Number(item.id) || 0,
-      service_id: Number(item.service_id) || 0,
-      service_name: String(item.name ?? item.service_name ?? ''),
-      service_category: String(item.category ?? item.service_category ?? ''),
-      service_description: String(item.description ?? item.service_description ?? ''),
-      person_id: Number(item.person_id ?? item.applicant_id ?? 0),
-      person_name: String(item.applicant_name ?? item.person_name ?? ''),
-      person_disability_type: String(item.disability_type ?? ''),
-      person_contact: String(item.contact_no ?? item.person_contact ?? ''),
-      status: Number(item.status ?? 0),
-      applied_at: String(item.date_created ?? item.applied_at ?? ''),
-      approved_at: null,
-      completed_at: null,
-      notes: null,
-      documents: [],
-    }))
   } catch (error) {
     console.error('Failed to fetch service history:', error)
-    historyEntries.value = getMockHistoryData().map((item) => ({
-      id: Number(item.id) || 0,
-      service_id: Number(item.service_id) || 0,
-      service_name: String(item.name ?? item.service_name ?? ''),
-      service_category: String(item.category ?? item.service_category ?? ''),
-      service_description: String(item.description ?? item.service_description ?? ''),
-      person_id: Number(item.person_id ?? item.applicant_id ?? 0),
-      person_name: String(item.applicant_name ?? item.person_name ?? ''),
-      person_disability_type: String(item.disability_type ?? ''),
-      person_contact: String(item.contact_no ?? item.person_contact ?? ''),
-      status: Number(item.status ?? 0),
-      applied_at: String(item.date_created ?? item.applied_at ?? ''),
-      approved_at: null,
-      completed_at: null,
-      notes: null,
-      documents: [],
-    }))
+    historyEntries.value = getMockServiceData()
   } finally {
     loading.value = false
   }
 }
 
-function getMockHistoryData(): Record<string, unknown>[] {
+function getMockServiceData(): ServiceHistoryEntry[] {
   return [
     {
-      id: 1201,
-      service_id: 1,
-      name: 'Financial Assistance',
-      category: 'Financial',
-      description: 'Monthly financial aid for persons with disabilities',
-      applicant_name: 'Maria Santos',
-      disability_type: 'Visual Impairment',
-      contact_no: '0917-123-4567',
-      status: 4,
-      date_created: '2025-01-05T08:00:00Z',
+      id: 1,
+      service_name: 'Financial Assistance',
+      service_category: 'Financial',
+      service_description: 'Monthly financial aid for persons with disabilities',
+      service_requirements: 'Valid PWD ID, Barangay Certificate, Income Statement',
+      status: 'Active',
+      date_created: '2025-01-05',
     },
     {
-      id: 1202,
-      service_id: 2,
-      name: 'Medical Aid',
-      category: 'Medical',
-      description: 'Coverage for medical expenses and check-ups',
-      applicant_name: 'Juan dela Cruz',
-      disability_type: 'Mobility Disability',
-      contact_no: '0918-234-5678',
-      status: 1,
-      date_created: '2025-01-10T14:00:00Z',
+      id: 2,
+      service_name: 'Medical Aid',
+      service_category: 'Medical',
+      service_description: 'Coverage for medical expenses and check-ups',
+      service_requirements: 'Medical Certificate, PWD ID, Referral Letter',
+      status: 'Active',
+      date_created: '2025-01-10',
     },
     {
-      id: 1203,
-      service_id: 3,
-      name: 'Skills Training',
-      category: 'Training',
-      description: 'Vocational and livelihood skills development',
-      applicant_name: 'Ana Reyes',
-      disability_type: 'Hearing Impairment',
-      contact_no: '0919-345-6789',
-      status: 2,
-      date_created: '2025-01-08T10:15:00Z',
+      id: 3,
+      service_name: 'Skills Training',
+      service_category: 'Training',
+      service_description: 'Vocational and livelihood skills development',
+      service_requirements: 'PWD ID, Training Application Form',
+      status: 'Active',
+      date_created: '2025-01-08',
     },
     {
-      id: 1204,
-      service_id: 4,
-      name: 'Wheelchair Provision',
-      category: 'Mobility',
-      description: 'Free wheelchairs and mobility devices',
-      applicant_name: 'Pedro Garcia',
-      disability_type: 'Mobility Disability',
-      contact_no: '0920-456-7890',
-      status: 3,
-      date_created: '2025-01-03T16:45:00Z',
+      id: 4,
+      service_name: 'Wheelchair Provision',
+      service_category: 'Mobility',
+      service_description: 'Free wheelchairs and mobility devices',
+      service_requirements: 'Medical Certificate, PWD ID, Assessment Form',
+      status: 'Draft',
+      date_created: '2025-01-03',
     },
     {
-      id: 1205,
-      service_id: 5,
-      name: 'Psychological Counseling',
-      category: 'Counseling Services',
-      description: 'Mental health support and counseling sessions',
-      applicant_name: 'Luz Villanueva',
-      disability_type: 'Cognitive Disability',
-      contact_no: '0921-567-8901',
-      status: 3,
-      date_created: '2025-01-12T09:00:00Z',
+      id: 5,
+      service_name: 'Psychological Counseling',
+      service_category: 'Counseling Services',
+      service_description: 'Mental health support and counseling sessions',
+      service_requirements: 'Referral Form, PWD ID, Medical Abstract',
+      status: 'Active',
+      date_created: '2025-01-12',
     },
     {
-      id: 1206,
-      service_id: 6,
-      name: 'Scholarship Program',
-      category: 'Education',
-      description: 'Educational assistance for PWD students',
-      applicant_name: 'Carlos Mendoza',
-      disability_type: 'Visual Impairment',
-      contact_no: '0922-678-9012',
-      status: 3,
-      date_created: '2024-12-20T11:30:00Z',
+      id: 6,
+      service_name: 'Scholarship Program',
+      service_category: 'Education',
+      service_description: 'Educational assistance for PWD students',
+      service_requirements: 'School ID, Grades, PWD ID, Application Form',
+      status: 'Active',
+      date_created: '2024-12-20',
     },
     {
-      id: 1207,
-      service_id: 1,
-      name: 'Food Pack Assistance',
-      category: 'Food Pack',
-      description: 'Food assistance program for PWD families',
-      applicant_name: 'Rosa Fernandez',
-      disability_type: 'Speech Impairment',
-      contact_no: '0923-789-0123',
-      status: 3,
-      date_created: '2024-12-15T07:30:00Z',
+      id: 7,
+      service_name: 'Food Pack Assistance',
+      service_category: 'Food Pack',
+      service_description: 'Food assistance program for PWD families',
+      service_requirements: 'PWD ID, Barangay Certification, Family List',
+      status: 'Archived',
+      date_created: '2024-12-15',
     },
     {
-      id: 1208,
-      service_id: 2,
-      name: 'Eyeglass Distribution',
-      category: 'Device Distribution',
-      description: 'Free eyeglasses for visually impaired persons',
-      applicant_name: 'Diego Ramos',
-      disability_type: 'Visual Impairment',
-      contact_no: '0924-890-1234',
-      status: 3,
-      date_created: '2025-01-11T11:00:00Z',
+      id: 8,
+      service_name: 'Eyeglass Distribution',
+      service_category: 'Device Distribution',
+      service_description: 'Free eyeglasses for visually impaired persons',
+      service_requirements: 'Eye Examination Report, PWD ID, Prescription',
+      status: 'Active',
+      date_created: '2025-01-11',
     },
     {
-      id: 1209,
-      service_id: 3,
-      name: 'Livelihood Training',
-      category: 'Training',
-      description: 'Vocational and livelihood skills development',
-      applicant_name: 'Elena Torres',
-      disability_type: 'Hearing Impairment',
-      contact_no: '0925-901-2345',
-      status: 4,
-      date_created: '2024-11-20T08:45:00Z',
+      id: 9,
+      service_name: 'Livelihood Training',
+      service_category: 'Training',
+      service_description: 'Vocational and livelihood skills development',
+      service_requirements: 'PWD ID, Livelihood Application Form',
+      status: 'Active',
+      date_created: '2024-11-20',
     },
   ]
 }
@@ -380,8 +319,8 @@ onMounted(() => {
     <div class="stats">
       <div class="stat-card">
         <div class="stat-left">
-          <v-icon>history</v-icon>
-          <span>Total Records</span>
+          <v-icon>inventory_2</v-icon>
+          <span>Total Services</span>
         </div>
         <div class="count">{{ totalStats.total }}</div>
       </div>
@@ -389,33 +328,25 @@ onMounted(() => {
       <div class="stat-card">
         <div class="stat-left">
           <v-icon>check_circle</v-icon>
-          <span>Approved</span>
+          <span>Active</span>
         </div>
-        <div class="count">{{ totalStats.approved }}</div>
+        <div class="count">{{ totalStats.active }}</div>
       </div>
 
       <div class="stat-card">
         <div class="stat-left">
-          <v-icon>pending</v-icon>
-          <span>Pending</span>
+          <v-icon>draft</v-icon>
+          <span>Draft</span>
         </div>
-        <div class="count">{{ totalStats.pending }}</div>
+        <div class="count">{{ totalStats.draft }}</div>
       </div>
 
       <div class="stat-card">
         <div class="stat-left">
-          <v-icon>cancel</v-icon>
-          <span>Denied</span>
+          <v-icon>archive</v-icon>
+          <span>Archived</span>
         </div>
-        <div class="count">{{ totalStats.denied }}</div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-left">
-          <v-icon>task_alt</v-icon>
-          <span>Completed</span>
-        </div>
-        <div class="count">{{ totalStats.completed }}</div>
+        <div class="count">{{ totalStats.archived }}</div>
       </div>
     </div>
 
@@ -454,8 +385,8 @@ onMounted(() => {
               <v-icon color="white" size="36">{{ categoryIcon(entry.service_category) }}</v-icon>
             </div>
             <div class="card-status-badge">
-              <span :class="['status-dot', statusColor(entry.status)]"></span>
-              {{ statusLabel(entry.status) }}
+              <span :class="['status-dot', statusColor(entry.status === 'Active' ? 1 : entry.status === 'Draft' ? 2 : 3)]"></span>
+              {{ statusLabel(entry.status === 'Active' ? 1 : entry.status === 'Draft' ? 2 : 3) }}
             </div>
           </div>
 
@@ -471,35 +402,21 @@ onMounted(() => {
 
             <div class="card-divider"></div>
 
-            <div class="card-person-row">
-              <v-avatar size="28" color="primary">
-                <span class="text-white text-caption" style="font-size: 12px; font-weight: 600">
-                  {{ entry.person_name.charAt(0) }}
-                </span>
-              </v-avatar>
-              <span class="card-person-name">{{ entry.person_name }}</span>
-              <span class="card-person-disability">{{ entry.person_disability_type }}</span>
+            <div class="card-requirements-row">
+              <span class="material-symbols-outlined requirements-icon">assignment</span>
+              <span class="card-requirements-text">{{ entry.service_requirements }}</span>
             </div>
 
             <div class="card-dates-row">
               <div class="card-date-item">
                 <span class="material-symbols-outlined date-icon">event</span>
-                <span class="date-label">Applied</span>
-                <span class="date-value">{{ formatDate(entry.applied_at) }}</span>
-              </div>
-              <div v-if="entry.completed_at" class="card-date-item">
-                <span class="material-symbols-outlined date-icon">check_circle</span>
-                <span class="date-label">Completed</span>
-                <span class="date-value">{{ formatDate(entry.completed_at) }}</span>
+                <span class="date-label">Created</span>
+                <span class="date-value">{{ formatDate(entry.date_created) }}</span>
               </div>
             </div>
 
             <div class="card-footer">
-              <div v-if="entry.documents.length" class="card-docs">
-                <span class="material-symbols-outlined doc-icon">description</span>
-                <span>{{ entry.documents.length }} document{{ entry.documents.length !== 1 ? 's' : '' }}</span>
-              </div>
-              <span class="card-id">#{{ entry.id }}</span>
+              <span class="card-id">Service #{{ entry.id }}</span>
             </div>
           </div>
         </div>
@@ -539,33 +456,33 @@ onMounted(() => {
           <!-- Status Badge -->
           <div class="detail-status-row">
             <v-chip
-              :color="statusColor(selectedEntry.status)"
+              :color="statusColor(selectedEntry.status === 'Active' ? 1 : selectedEntry.status === 'Draft' ? 2 : 3)"
               size="small"
               variant="flat"
             >
-              {{ statusLabel(selectedEntry.status) }}
+              {{ statusLabel(selectedEntry.status === 'Active' ? 1 : selectedEntry.status === 'Draft' ? 2 : 3) }}
             </v-chip>
-            <span class="detail-id-label">Record #{{ selectedEntry.id }}</span>
+            <span class="detail-id-label">Service #{{ selectedEntry.id }}</span>
           </div>
 
           <v-row>
             <v-col cols="12" md="6">
               <div class="detail-section">
                 <h4 class="detail-section-title">
-                  <span class="material-symbols-outlined section-icon">person</span>
-                  Applicant Information
+                  <span class="material-symbols-outlined section-icon">info</span>
+                  Service Details
                 </h4>
                 <div class="detail-field">
-                  <span class="detail-label">Name</span>
-                  <span class="detail-value">{{ selectedEntry.person_name }}</span>
+                  <span class="detail-label">Service Name</span>
+                  <span class="detail-value">{{ selectedEntry.service_name }}</span>
                 </div>
                 <div class="detail-field">
-                  <span class="detail-label">Disability Type</span>
-                  <span class="detail-value">{{ selectedEntry.person_disability_type }}</span>
+                  <span class="detail-label">Category</span>
+                  <span class="detail-value">{{ selectedEntry.service_category }}</span>
                 </div>
                 <div class="detail-field">
-                  <span class="detail-label">Contact</span>
-                  <span class="detail-value">{{ selectedEntry.person_contact }}</span>
+                  <span class="detail-label">Status</span>
+                  <span class="detail-value">{{ selectedEntry.status }}</span>
                 </div>
               </div>
             </v-col>
@@ -574,43 +491,22 @@ onMounted(() => {
               <div class="detail-section">
                 <h4 class="detail-section-title">
                   <span class="material-symbols-outlined section-icon">event</span>
-                  Service Timeline
+                  Service Information
                 </h4>
                 <div class="detail-field">
-                  <span class="detail-label">Applied</span>
-                  <span class="detail-value">{{ formatFullDate(selectedEntry.applied_at) }}</span>
-                </div>
-                <div v-if="selectedEntry.approved_at" class="detail-field">
-                  <span class="detail-label">Approved</span>
-                  <span class="detail-value">{{ formatFullDate(selectedEntry.approved_at) }}</span>
-                </div>
-                <div v-if="selectedEntry.completed_at" class="detail-field">
-                  <span class="detail-label">Completed</span>
-                  <span class="detail-value">{{ formatFullDate(selectedEntry.completed_at) }}</span>
+                  <span class="detail-label">Date Created</span>
+                  <span class="detail-value">{{ formatFullDate(selectedEntry.date_created) }}</span>
                 </div>
               </div>
             </v-col>
           </v-row>
 
-          <div v-if="selectedEntry.notes" class="detail-section">
+          <div class="detail-section">
             <h4 class="detail-section-title">
-              <span class="material-symbols-outlined section-icon">note</span>
-              Notes
+              <span class="material-symbols-outlined section-icon">assignment</span>
+              Requirements
             </h4>
-            <p class="detail-notes">{{ selectedEntry.notes }}</p>
-          </div>
-
-          <div v-if="selectedEntry.documents.length" class="detail-section">
-            <h4 class="detail-section-title">
-              <span class="material-symbols-outlined section-icon">description</span>
-              Documents ({{ selectedEntry.documents.length }})
-            </h4>
-            <div class="document-list">
-              <div v-for="doc in selectedEntry.documents" :key="doc" class="document-item">
-                <span class="material-symbols-outlined doc-file-icon">description</span>
-                <span class="doc-name">{{ doc }}</span>
-              </div>
-            </div>
+            <p class="detail-requirements">{{ selectedEntry.service_requirements }}</p>
           </div>
 
           <div class="detail-section">
@@ -873,26 +769,24 @@ onMounted(() => {
   margin: 0 0 12px;
 }
 
-.card-person-row {
+.card-requirements-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   margin-bottom: 10px;
 }
 
-.card-person-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: #374151;
+.requirements-icon {
+  font-size: 18px;
+  color: #0b1b5a;
+  margin-top: 2px;
 }
 
-.card-person-disability {
-  font-size: 11px;
-  color: #8a8a8a;
-  margin-left: auto;
-  background: #f0f4f8;
-  padding: 3px 8px;
-  border-radius: 999px;
+.card-requirements-text {
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.4;
+  flex: 1;
 }
 
 .card-dates-row {
@@ -925,23 +819,10 @@ onMounted(() => {
 
 .card-footer {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   padding-top: 10px;
   border-top: 1px solid #f0f4f8;
-}
-
-.card-docs {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  color: #6b7280;
-}
-
-.doc-icon {
-  font-size: 16px;
-  color: #8a8a8a;
 }
 
 .card-id {
@@ -1073,6 +954,16 @@ onMounted(() => {
   font-size: 14px;
   color: #374151;
   line-height: 1.5;
+  margin: 0;
+}
+
+.detail-requirements {
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.6;
+  background: #f0f4f8;
+  border-radius: 10px;
+  padding: 12px 16px;
   margin: 0;
 }
 
