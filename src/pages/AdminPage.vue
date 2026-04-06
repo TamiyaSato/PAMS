@@ -78,8 +78,22 @@ watch(
 
         <v-list-item
           to="/admin/activity-logs"
-          prepend-icon="bar_chart"
+          prepend-icon="history"
           title="Activity Logs"
+          class="menu-item"
+        />
+
+        <v-list-item
+          to="/admin/reporting-analytics"
+          prepend-icon="assessment"
+          title="Reporting & Analytics"
+          class="menu-item"
+        />
+
+        <v-list-item
+          to="/admin/service-history"
+          prepend-icon="inventory"
+          title="Service History"
           class="menu-item"
         />
 
