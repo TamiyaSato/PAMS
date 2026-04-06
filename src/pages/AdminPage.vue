@@ -33,7 +33,7 @@ watch(
 </script>
 
 <template>
-  <v-layout>
+  <v-layout style="overflow-x: auto">
     <v-navigation-drawer
       permanent
       rail
@@ -115,8 +115,8 @@ watch(
       </v-list>
     </v-navigation-drawer>
 
-    <v-main>
-      <v-app-bar flat title="PAMS">
+    <v-main style="padding-left: 72px">
+      <v-app-bar flat title="PAMS" app location="top">
         <template #append>
           <label
             style="font-size: small; font-weight: 600; font-family: Inter, sans-serif"

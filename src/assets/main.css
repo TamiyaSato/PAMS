@@ -84,3 +84,13 @@
   background: #0b1b5a;
   color: white;
 }
+
+/* === Fixed Admin Sidebar === */
+.admin-drawer {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  height: 100vh !important;
+  transform: none !important;
+  z-index: 1000 !important;
+}
