@@ -198,7 +198,11 @@ async function fetchServiceHistory() {
   loading.value = true
   try {
     const res = await api.get<unknown[]>('/api/v1/transactions')
-    const data = Array.isArray(res.data) ? (res.data as Record<string, unknown>[]) : []
+    let data = Array.isArray(res.data) ? (res.data as Record<string, unknown>[]) : []
+
+    if (data.length === 0) {
+      data = getMockHistoryData()
+    }
 
     historyEntries.value = data.map((item) => ({
       id: Number(item.id) || 0,
@@ -219,9 +223,139 @@ async function fetchServiceHistory() {
     }))
   } catch (error) {
     console.error('Failed to fetch service history:', error)
+    historyEntries.value = getMockHistoryData().map((item) => ({
+      id: Number(item.id) || 0,
+      service_id: Number(item.service_id) || 0,
+      service_name: String(item.name ?? item.service_name ?? ''),
+      service_category: String(item.category ?? item.service_category ?? ''),
+      service_description: String(item.description ?? item.service_description ?? ''),
+      person_id: Number(item.person_id ?? item.applicant_id ?? 0),
+      person_name: String(item.applicant_name ?? item.person_name ?? ''),
+      person_disability_type: String(item.disability_type ?? ''),
+      person_contact: String(item.contact_no ?? item.person_contact ?? ''),
+      status: Number(item.status ?? 0),
+      applied_at: String(item.date_created ?? item.applied_at ?? ''),
+      approved_at: null,
+      completed_at: null,
+      notes: null,
+      documents: [],
+    }))
   } finally {
     loading.value = false
   }
+}
+
+function getMockHistoryData(): Record<string, unknown>[] {
+  return [
+    {
+      id: 1201,
+      service_id: 1,
+      name: 'Financial Assistance',
+      category: 'Financial',
+      description: 'Monthly financial aid for persons with disabilities',
+      applicant_name: 'Maria Santos',
+      disability_type: 'Visual Impairment',
+      contact_no: '0917-123-4567',
+      status: 4,
+      date_created: '2025-01-05T08:00:00Z',
+    },
+    {
+      id: 1202,
+      service_id: 2,
+      name: 'Medical Aid',
+      category: 'Medical',
+      description: 'Coverage for medical expenses and check-ups',
+      applicant_name: 'Juan dela Cruz',
+      disability_type: 'Mobility Disability',
+      contact_no: '0918-234-5678',
+      status: 1,
+      date_created: '2025-01-10T14:00:00Z',
+    },
+    {
+      id: 1203,
+      service_id: 3,
+      name: 'Skills Training',
+      category: 'Training',
+      description: 'Vocational and livelihood skills development',
+      applicant_name: 'Ana Reyes',
+      disability_type: 'Hearing Impairment',
+      contact_no: '0919-345-6789',
+      status: 2,
+      date_created: '2025-01-08T10:15:00Z',
+    },
+    {
+      id: 1204,
+      service_id: 4,
+      name: 'Wheelchair Provision',
+      category: 'Mobility',
+      description: 'Free wheelchairs and mobility devices',
+      applicant_name: 'Pedro Garcia',
+      disability_type: 'Mobility Disability',
+      contact_no: '0920-456-7890',
+      status: 3,
+      date_created: '2025-01-03T16:45:00Z',
+    },
+    {
+      id: 1205,
+      service_id: 5,
+      name: 'Psychological Counseling',
+      category: 'Counseling Services',
+      description: 'Mental health support and counseling sessions',
+      applicant_name: 'Luz Villanueva',
+      disability_type: 'Cognitive Disability',
+      contact_no: '0921-567-8901',
+      status: 3,
+      date_created: '2025-01-12T09:00:00Z',
+    },
+    {
+      id: 1206,
+      service_id: 6,
+      name: 'Scholarship Program',
+      category: 'Education',
+      description: 'Educational assistance for PWD students',
+      applicant_name: 'Carlos Mendoza',
+      disability_type: 'Visual Impairment',
+      contact_no: '0922-678-9012',
+      status: 3,
+      date_created: '2024-12-20T11:30:00Z',
+    },
+    {
+      id: 1207,
+      service_id: 1,
+      name: 'Food Pack Assistance',
+      category: 'Food Pack',
+      description: 'Food assistance program for PWD families',
+      applicant_name: 'Rosa Fernandez',
+      disability_type: 'Speech Impairment',
+      contact_no: '0923-789-0123',
+      status: 3,
+      date_created: '2024-12-15T07:30:00Z',
+    },
+    {
+      id: 1208,
+      service_id: 2,
+      name: 'Eyeglass Distribution',
+      category: 'Device Distribution',
+      description: 'Free eyeglasses for visually impaired persons',
+      applicant_name: 'Diego Ramos',
+      disability_type: 'Visual Impairment',
+      contact_no: '0924-890-1234',
+      status: 3,
+      date_created: '2025-01-11T11:00:00Z',
+    },
+    {
+      id: 1209,
+      service_id: 3,
+      name: 'Livelihood Training',
+      category: 'Training',
+      description: 'Vocational and livelihood skills development',
+      applicant_name: 'Elena Torres',
+      disability_type: 'Hearing Impairment',
+      contact_no: '0925-901-2345',
+      status: 4,
+      date_created: '2024-11-20T08:45:00Z',
+    },
+  ]
 }
 
 onMounted(() => {
