@@ -37,6 +37,7 @@ const categoryColors: Record<string, string> = {
   'Mobility Aid': '#1e8e3e',
   'Food Pack': '#0b1b5a',
   'Counseling Services': '#1976d2',
+  'Mental Health': '#1976d2',
 }
 
 const categoryIcons: Record<string, string> = {
@@ -50,19 +51,21 @@ const categoryIcons: Record<string, string> = {
   'Mobility Aid': 'accessible',
   'Food Pack': 'lunch_dining',
   'Counseling Services': 'support_agent',
+  'Mental Health': 'support_agent',
 }
 
 const categoryImages: Record<string, string> = {
   Financial: '/dswd-10.jpg',
   Medical: '/eyeglass1-1024x683.jpg',
   Training: '/Livelihood-1-1024x576.jpg',
-  Mobility: '/120-WHEELCHAIRS-ASSISTIVE-DEVICES-FOR-THE-THIRD-DISTRICT.jpg',
+  Mobility: '/wheelchair.jpg',
   Counseling: '/counseling.jpg',
   Education: '/ffps-5.jpg',
   'Device Distribution': '/eyeglass1-1024x683.jpg',
-  'Mobility Aid': '/120-WHEELCHAIRS-ASSISTIVE-DEVICES-FOR-THE-THIRD-DISTRICT.jpg',
+  'Mobility Aid': '/wheelchair.jpg',
   'Food Pack': '/ffps-5.jpg',
   'Counseling Services': '/counseling.jpg',
+  'Mental Health': '/counseling.jpg',
 }
 
 // ---- Computed ----
@@ -81,6 +84,12 @@ const filteredEntries = computed(() => {
         e.service_category.toLowerCase().includes(q) ||
         e.service_description.toLowerCase().includes(q),
     )
+  }
+
+  // Sort: Active services first when on "All" tab
+  if (activeTab.value === 'All') {
+    const statusOrder: Record<string, number> = { Active: 0, Draft: 1, Archived: 2 }
+    list = [...list].sort((a, b) => (statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99))
   }
 
   return list
@@ -193,15 +202,28 @@ async function fetchServiceHistory() {
     if (data.length === 0) {
       historyEntries.value = getMockServiceData()
     } else {
-      historyEntries.value = data.map((item) => ({
-        id: Number(item.id) || 0,
-        service_name: String(item.name ?? ''),
-        service_category: String(item.category ?? ''),
-        service_description: String(item.description ?? ''),
-        service_requirements: String(item.requirements ?? ''),
-        status: item.active === 1 ? 'Active' : item.active === 2 ? 'Draft' : 'Archived',
-        date_created: String(item.date_created ?? ''),
-      }))
+      historyEntries.value = data.map((item) => {
+        const rawDate = item.date_created ?? ''
+        let formattedDate = ''
+        if (rawDate) {
+          const d = new Date(rawDate)
+          if (!isNaN(d.getTime())) {
+            formattedDate = d.toISOString().split('T')[0] ?? ''
+          } else {
+            formattedDate = String(rawDate).split('T')[0] ?? ''
+          }
+        }
+
+        return {
+          id: Number(item.id) || 0,
+          service_name: String(item.name ?? ''),
+          service_category: String(item.category ?? ''),
+          service_description: String(item.description ?? ''),
+          service_requirements: String(item.requirements ?? ''),
+          status: item.active === 1 ? 'Active' : item.active === 2 ? 'Draft' : 'Archived',
+          date_created: formattedDate,
+        }
+      })
     }
   } catch (error) {
     console.error('Failed to fetch service history:', error)
@@ -252,7 +274,7 @@ function getMockServiceData(): ServiceHistoryEntry[] {
     {
       id: 5,
       service_name: 'Psychological Counseling',
-      service_category: 'Counseling Services',
+      service_category: 'Mental Health',
       service_description: 'Mental health support and counseling sessions',
       service_requirements: 'Referral Form, PWD ID, Medical Abstract',
       status: 'Active',
@@ -410,7 +432,7 @@ onMounted(() => {
             <div class="card-dates-row">
               <div class="card-date-item">
                 <span class="material-symbols-outlined date-icon">event</span>
-                <span class="date-label">Created</span>
+                <span class="date-label">Cut Off</span>
                 <span class="date-value">{{ formatDate(entry.date_created) }}</span>
               </div>
             </div>
@@ -495,7 +517,7 @@ onMounted(() => {
                 </h4>
                 <div class="detail-field">
                   <span class="detail-label">Date Created</span>
-                  <span class="detail-value">{{ formatFullDate(selectedEntry.date_created) }}</span>
+                  <span class="detail-value">{{ formatDate(selectedEntry.date_created) }}</span>
                 </div>
               </div>
             </v-col>

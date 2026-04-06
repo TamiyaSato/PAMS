@@ -3,6 +3,7 @@ import api from '@/api/axios'
 import { onMounted, ref, computed, watch } from 'vue'
 import type { announcementResponse } from '@/models/announcementResponse'
 import { useAuthStore } from '@/stores/auth'
+import { logActivity } from '@/utils/activityLogger'
 
 const dialog = ref(false)
 const tabs = ['All Announcements', 'Posted', 'Scheduled', 'Draft', 'Archived']
@@ -82,7 +83,14 @@ async function saveAnnouncement() {
       category: newAnnouncement.value.category,
     }
 
-    await api.post('/api/v1/announcements', payload)
+    const response = await api.post('/api/v1/announcements', payload)
+    const announcementId = response.data?.id ?? null
+    await logActivity({
+      action: 'create',
+      entity_type: 'announcement',
+      entity_id: announcementId,
+      description: `Created new announcement: ${newAnnouncement.value.title}`,
+    })
     dialog.value = false
     await fetchAnnouncements()
 
@@ -129,7 +137,16 @@ async function fetchAnnouncements() {
 
 async function updateAnnouncementStatus(id: number, status: number) {
   try {
+    const ann = announcements.value.find((a) => a.id === id)
+    const statusLabel = ['Posted', 'Scheduled', 'Draft', 'Archived']
+    const label = statusLabel[status - 1] ?? 'updated'
     await api.patch(`/api/v1/announcements/${id}/status`, { status })
+    await logActivity({
+      action: 'update',
+      entity_type: 'announcement',
+      entity_id: id,
+      description: `${label} announcement: ${ann?.title}`,
+    })
     await fetchAnnouncements()
   } catch (error) {
     console.error('Failed to update announcement status:', error)

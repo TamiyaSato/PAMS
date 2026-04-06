@@ -3,6 +3,7 @@ import api from '@/api/axios'
 import { onMounted, ref, computed, watch } from 'vue'
 import type { serviceResponse } from '@/models/serviceResponse'
 import TableLoading from '@/components/TableLoading.vue'
+import { logActivity } from '@/utils/activityLogger'
 
 type serviceWithActions = serviceResponse & { showActions: boolean }
 
@@ -77,7 +78,14 @@ async function saveNewService() {
         ? new Date(newService.value.date_created).toISOString().split('T')[0]
         : '',
     }
-    await api.post('/api/v1/service-types', payload)
+    const response = await api.post('/api/v1/service-types', payload)
+    const serviceId = response.data?.id ?? 'unknown'
+    await logActivity({
+      action: 'create',
+      entity_type: 'service',
+      entity_id: typeof serviceId === 'number' ? serviceId : null,
+      description: `Created new service: ${newService.value.name}`,
+    })
     newDialog.value = false
     await fetchServices()
     newService.value = {
@@ -112,6 +120,12 @@ async function saveEditService() {
         : '',
     }
     await api.put(`/api/v1/service-types/${editServiceData.value.id}`, payload)
+    await logActivity({
+      action: 'update',
+      entity_type: 'service',
+      entity_id: editServiceData.value.id,
+      description: `Updated service: ${editServiceData.value.name}`,
+    })
     editDialog.value = false
     await fetchServices()
   } catch (error) {
@@ -121,7 +135,15 @@ async function saveEditService() {
 
 async function updateStatus(id: number, status: number) {
   try {
+    const service = services.value.find((s) => s.id === id)
+    const actionLabel = status === 3 ? 'archive' : 'draft'
     await api.patch(`/api/v1/service-types/${id}/status`, { status })
+    await logActivity({
+      action: 'update',
+      entity_type: 'service',
+      entity_id: id,
+      description: `${actionLabel.charAt(0).toUpperCase() + actionLabel.slice(1)}d service: ${service?.name}`,
+    })
     await fetchServices()
   } catch (error) {
     console.error('Error updating status:', error)
@@ -167,7 +189,7 @@ onMounted(() => fetchServices())
               <v-text-field v-model="newService.description" label="Description*" required />
               <v-autocomplete
                 v-model="newService.category"
-                :items="['Financial', 'Goods', 'Training', 'Medical']"
+                :items="['Financial', 'Goods', 'Training', 'Medical', 'Mobility', 'Mental Health']"
                 label="Category"
               />
               <v-text-field v-model="newService.requirements" label="Requirements*" required />
@@ -254,7 +276,7 @@ onMounted(() => fetchServices())
           <v-text-field v-model="editServiceData.description" label="Description*" required />
           <v-autocomplete
             v-model="editServiceData.category"
-            :items="['Financial', 'Goods', 'Training', 'Medical']"
+            :items="['Financial', 'Goods', 'Training', 'Medical', 'Mobility', 'Mental Health']"
             label="Category"
           />
           <v-text-field v-model="editServiceData.requirements" label="Requirements*" required />

@@ -3,6 +3,7 @@ import api from '@/api/axios'
 import TableLoading from '@/components/TableLoading.vue'
 import type { applicationResponse } from '@/models/serviceResponse'
 import { ref, computed, onMounted } from 'vue'
+import { logActivity } from '@/utils/activityLogger'
 
 const loading = ref(false)
 
@@ -55,7 +56,15 @@ const searchedApplications = computed(() => {
 
 async function updateStatus(id: number, status: number) {
   try {
+    const app = applications.value.find((a) => a.id === id)
+    const actionLabel = status === 2 ? 'approve' : 'deny'
     await api.patch(`/api/v1/transactions/${id}/status`, { status })
+    await logActivity({
+      action: actionLabel,
+      entity_type: 'application',
+      entity_id: id,
+      description: `${actionLabel.charAt(0).toUpperCase() + actionLabel.slice(1)}d application #${id} – ${app?.applicant_name}`,
+    })
     await fetchApplications()
   } catch (e) {
     console.error('Failed to update status:', e)

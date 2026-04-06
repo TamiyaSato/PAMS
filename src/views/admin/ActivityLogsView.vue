@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import api from '@/api/axios'
 import TableLoading from '@/components/TableLoading.vue'
+import { useActivityLogStore } from '@/stores/activityLog'
 
 // ---- Types ----
 interface ActivityLogEntry {
@@ -22,6 +23,7 @@ const logs = ref<ActivityLogEntry[]>([])
 const loading = ref(false)
 const searchQuery = ref('')
 const activeTab = ref('All')
+const activityStore = useActivityLogStore()
 
 const tabs = ['All', 'Login', 'Create', 'Update', 'Delete', 'Approve', 'Deny']
 
@@ -111,17 +113,22 @@ async function fetchLogs() {
   loading.value = true
   try {
     const res = await api.get<ActivityLogEntry[]>('/api/v1/activity-logs')
-    logs.value = Array.isArray(res.data) ? res.data : []
+    const apiLogs = Array.isArray(res.data) ? res.data : []
+    const localLogs = activityStore.getLocalLogs()
+    // Merge: local logs first (most recent), then API logs
+    logs.value = [...localLogs, ...apiLogs]
   } catch (error) {
     console.error('Failed to fetch activity logs:', error)
-    applyMockData()
+    // Merge local with mock data on failure
+    const localLogs = activityStore.getLocalLogs()
+    logs.value = [...localLogs, ...getMockData()]
   } finally {
     loading.value = false
   }
 }
 
-function applyMockData() {
-  logs.value = [
+function getMockData(): ActivityLogEntry[] {
+  return [
     {
       id: 1,
       user_id: 10,
@@ -270,6 +277,11 @@ function applyMockData() {
 }
 
 onMounted(() => {
+  // Pre-populate with mock data if API fails
+  const localLogs = activityStore.getLocalLogs()
+  if (localLogs.length === 0) {
+    logs.value = getMockData()
+  }
   fetchLogs()
 })
 </script>

@@ -2,6 +2,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import api from '@/api/axios'
 import { useAuthStore } from '@/stores/auth'
+import { logActivity } from '@/utils/activityLogger'
 
 const authStore = useAuthStore()
 authStore.checkAuth()
@@ -164,7 +165,7 @@ async function saveAppointment() {
     return
 
   try {
-    await api.post('/api/v1/appointments', {
+    const response = await api.post('/api/v1/appointments', {
       person_id: Number(newAppointment.person_id),
       service_id: Number(newAppointment.service_id),
       preferred_date: toLocalISOString(newAppointment.preferred_date),
@@ -172,6 +173,15 @@ async function saveAppointment() {
       status: 2,
       location: newAppointment.location,
       notes: newAppointment.notes,
+    })
+
+    const appointmentId = response.data?.id ?? null
+    const serviceName = serviceTypes.value.find((s) => s.id === Number(newAppointment.service_id))?.name ?? 'Unknown'
+    await logActivity({
+      action: 'create',
+      entity_type: 'appointment',
+      entity_id: appointmentId,
+      description: `Created appointment for ${serviceName} service`,
     })
 
     dialog.value = false
