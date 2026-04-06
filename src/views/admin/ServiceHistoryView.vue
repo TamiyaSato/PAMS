@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import api from '@/api/axios'
+import imgRectangle from '@/assets/Rectangle 148.png'
+import imgWheelchair from '@/assets/wheelchair.jpg'
+import imgBlind from '@/assets/blind.jpg'
+import imgCatto from '@/assets/catto.jpg'
 
 // ---- Types ----
 interface ServiceHistoryEntry {
@@ -52,12 +56,12 @@ const categoryIcons: Record<string, string> = {
 }
 
 const categoryImages: Record<string, string> = {
-  Financial: '/src/assets/Rectangle 148.png',
-  Medical: '/src/assets/wheelchair.jpg',
-  Training: '/src/assets/blind.jpg',
-  Mobility: '/src/assets/wheelchair.jpg',
-  Counseling: '/src/assets/catto.jpg',
-  Education: '/src/assets/Rectangle 148.png',
+  Financial: imgRectangle,
+  Medical: imgWheelchair,
+  Training: imgBlind,
+  Mobility: imgWheelchair,
+  Counseling: imgCatto,
+  Education: imgRectangle,
 }
 
 // ---- Computed ----
