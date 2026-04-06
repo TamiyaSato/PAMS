@@ -79,7 +79,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="services-view">
+  <div class="applications-view">
     <div class="top-header">
       <h2>Applications</h2>
 
@@ -160,16 +160,19 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.services-view {
+/* === Wrapper === */
+.applications-view {
   background: #eef5f9;
   padding: 24px;
   min-height: 100vh;
   font-family: Inter, sans-serif;
 }
 
+/* === Top Header === */
 .top-header {
   display: flex;
   justify-content: space-between;
+  margin-bottom: 24px;
 }
 
 .top-actions {
@@ -178,6 +181,7 @@ onMounted(() => {
   align-items: center;
 }
 
+/* === Search Box === */
 .search-box {
   background: white;
   padding: 10px 14px;
@@ -190,13 +194,17 @@ onMounted(() => {
 .search-box input {
   border: none;
   outline: none;
+  background: transparent;
+  font-size: 14px;
 }
 
+/* === Pill Buttons === */
 .pill {
   border-radius: 999px;
-  padding: 10px 16px;
+  padding: 10px 18px;
   font-weight: 600;
   border: none;
+  cursor: pointer;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -207,6 +215,7 @@ onMounted(() => {
   color: white;
 }
 
+/* === Table Card & Tabs === */
 .table-card {
   background: white;
   border-radius: 14px;
@@ -249,6 +258,7 @@ onMounted(() => {
   background: #0d6efd;
 }
 
+/* === Applications Table === */
 .services-table {
   width: 100%;
   border-collapse: collapse;
@@ -258,10 +268,18 @@ onMounted(() => {
   padding: 14px 12px;
   border-bottom: 1px solid #e5e7eb;
   text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  background: #f9fafb;
 }
 
 .services-table tbody tr {
   background: #eef5f9;
+}
+
+.services-table tbody tr:hover {
+  background: #e0e9f1;
 }
 
 .services-table tbody tr:not(:last-child) {
@@ -270,8 +288,10 @@ onMounted(() => {
 
 .services-table td {
   padding: 16px 12px;
+  font-size: 14px;
 }
 
+/* === Actions Button === */
 .actions-btn {
   background: #0b1b5a;
   color: white;
@@ -284,46 +304,12 @@ onMounted(() => {
   cursor: pointer;
 }
 
-.actions-menu {
-  position: absolute;
-  top: 42px;
-  right: 0;
-  background: white;
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  overflow: hidden;
-  z-index: 10;
-}
-
-.actions-menu button {
-  width: 100%;
-  padding: 10px 16px;
-  border: none;
-  background: white;
-  text-align: left;
-  cursor: pointer;
-  font-weight: 500;
-}
-
-.actions-menu button:hover {
-  background: #eef5f9;
-}
-
-.export-btn {
-  background: #02833c;
-  color: white;
-  border-radius: 999px;
-  border: none;
-  padding: 8px 16px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
+/* === File Icon === */
 .file-icon {
   color: #0d6efd;
 }
 
+/* === Material Icons === */
 .material-symbols-outlined {
   font-variation-settings:
     'FILL' 0,

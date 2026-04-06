@@ -250,17 +250,19 @@ onMounted(() => fetchAnnouncements())
 </template>
 
 <style scoped>
+/* === Wrapper === */
 .announcements-view {
   background: #eef5f9;
   padding: 24px;
-  min-height: 90vh;
+  min-height: 100vh;
   font-family: Inter, sans-serif;
 }
 
+/* === Top Header === */
 .top-header {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .top-actions {
@@ -269,6 +271,7 @@ onMounted(() => fetchAnnouncements())
   align-items: center;
 }
 
+/* === Search Box === */
 .search-box {
   background: white;
   padding: 10px 14px;
@@ -281,20 +284,27 @@ onMounted(() => fetchAnnouncements())
 .search-box input {
   border: none;
   outline: none;
+  background: transparent;
+  font-size: 14px;
 }
 
+/* === Pill Buttons === */
 .pill {
   border-radius: 999px;
   padding: 10px 18px;
   font-weight: 600;
   border: none;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .pill.yellow {
   background: #ffbf00;
 }
 
+/* === Table Card & Tabs === */
 .table-card {
   background: white;
   border-radius: 14px;
@@ -309,13 +319,14 @@ onMounted(() => fetchAnnouncements())
 
 .tabs {
   display: flex;
-  gap: 28px;
+  gap: 36px;
 }
 
 .tab {
   background: none;
   border: none;
   padding: 12px 0;
+  font-size: 15px;
   color: #8b8b8b;
   cursor: pointer;
   position: relative;
@@ -336,25 +347,40 @@ onMounted(() => fetchAnnouncements())
   background: #0d6efd;
 }
 
+/* === Announcements Table === */
 .announcements-table {
   width: 100%;
   border-collapse: collapse;
 }
 
-thead th {
+.announcements-table thead th {
   padding: 14px 12px;
   border-bottom: 1px solid #e5e7eb;
   text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  background: #f9fafb;
 }
 
-tbody tr {
+.announcements-table tbody tr {
   background: #eef5f9;
 }
 
-tbody td {
-  padding: 16px 12px;
+.announcements-table tbody tr:hover {
+  background: #e0e9f1;
 }
 
+.announcements-table tbody tr:not(:last-child) {
+  border-bottom: 1px solid #dbe5ee;
+}
+
+.announcements-table td {
+  padding: 16px 12px;
+  font-size: 14px;
+}
+
+/* === Status Pill === */
 .status-pill {
   background: #dbeafe;
   color: #1e40af;
@@ -368,6 +394,7 @@ tbody td {
   height: 26px;
 }
 
+/* === Actions Button === */
 .actions-btn {
   background: #0b1b5a;
   color: white;
@@ -409,11 +436,11 @@ tbody td {
   background: #eef5f9;
 }
 
-.show-all {
-  text-align: right;
-  color: #0d6efd;
-  font-weight: 600;
-  margin-top: 10px;
-  cursor: pointer;
+/* === Material Icons === */
+.material-symbols-outlined {
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 500,
+    'opsz' 24;
 }
 </style>

@@ -144,7 +144,7 @@ onMounted(() => fetchServices())
 </script>
 
 <template>
-  <v-container fluid class="admin-container">
+  <div class="services-view">
     <div class="top-header">
       <h2>Services</h2>
 
@@ -266,14 +266,65 @@ onMounted(() => fetchServices())
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </v-container>
+  </div>
 </template>
 
 <style scoped>
+/* === Wrapper === */
+.services-view {
+  background: #eef5f9;
+  padding: 24px;
+  min-height: 100vh;
+  font-family: Inter, sans-serif;
+}
+
+/* === Top Header === */
+.top-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.top-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* === Search Box === */
+.search-box {
+  background: white;
+  padding: 10px 14px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.search-box input {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 14px;
+}
+
+/* === Pill Buttons === */
+.pill {
+  border-radius: 999px;
+  padding: 10px 18px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .pill.yellow {
   background: #ffbf00;
 }
 
+/* === Table Card & Tabs === */
 .table-card {
   background: white;
   border-radius: 14px;
@@ -316,6 +367,7 @@ onMounted(() => fetchServices())
   background: #0d6efd;
 }
 
+/* === Services Table === */
 .services-table {
   width: 100%;
   border-collapse: collapse;
@@ -325,10 +377,18 @@ onMounted(() => fetchServices())
   padding: 14px 12px;
   border-bottom: 1px solid #e5e7eb;
   text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  background: #f9fafb;
 }
 
 .services-table tbody tr {
   background: #eef5f9;
+}
+
+.services-table tbody tr:hover {
+  background: #e0e9f1;
 }
 
 .services-table tbody tr:not(:last-child) {
@@ -337,8 +397,10 @@ onMounted(() => fetchServices())
 
 .services-table td {
   padding: 16px 12px;
+  font-size: 14px;
 }
 
+/* === Actions Button === */
 .actions-btn {
   background: #0b1b5a;
   color: white;
@@ -348,18 +410,10 @@ onMounted(() => fetchServices())
   display: inline-flex;
   align-items: center;
   gap: 6px;
-}
-.export-btn {
-  background: #02833c;
-  color: white;
-  border-radius: 999px;
-  border: none;
-  padding: 8px 16px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  cursor: pointer;
 }
 
+/* === Material Icons === */
 .material-symbols-outlined {
   font-variation-settings:
     'FILL' 0,

@@ -1,10 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import api from '@/api/axios'
-import imgRectangle from '@/assets/Rectangle 148.png'
-import imgWheelchair from '@/assets/wheelchair.jpg'
-import imgBlind from '@/assets/blind.jpg'
-import imgCatto from '@/assets/catto.jpg'
 
 // ---- Types ----
 interface ServiceHistoryEntry {
@@ -44,6 +40,10 @@ const categoryColors: Record<string, string> = {
   Mobility: '#1e8e3e',
   Counseling: '#1976d2',
   Education: '#7b1fa2',
+  'Device Distribution': '#e53935',
+  'Mobility Aid': '#1e8e3e',
+  'Food Pack': '#0b1b5a',
+  'Counseling Services': '#1976d2',
 }
 
 const categoryIcons: Record<string, string> = {
@@ -53,15 +53,23 @@ const categoryIcons: Record<string, string> = {
   Mobility: 'accessible',
   Counseling: 'support_agent',
   Education: 'menu_book',
+  'Device Distribution': 'devices',
+  'Mobility Aid': 'accessible',
+  'Food Pack': 'lunch_dining',
+  'Counseling Services': 'support_agent',
 }
 
 const categoryImages: Record<string, string> = {
-  Financial: imgRectangle,
-  Medical: imgWheelchair,
-  Training: imgBlind,
-  Mobility: imgWheelchair,
-  Counseling: imgCatto,
-  Education: imgRectangle,
+  Financial: '/dswd-10.jpg',
+  Medical: '/eyeglass1-1024x683.jpg',
+  Training: '/Livelihood-1-1024x576.jpg',
+  Mobility: '/120-WHEELCHAIRS-ASSISTIVE-DEVICES-FOR-THE-THIRD-DISTRICT.jpg',
+  Counseling: '/counseling.jpg',
+  Education: '/ffps-5.jpg',
+  'Device Distribution': '/eyeglass1-1024x683.jpg',
+  'Mobility Aid': '/120-WHEELCHAIRS-ASSISTIVE-DEVICES-FOR-THE-THIRD-DISTRICT.jpg',
+  'Food Pack': '/ffps-5.jpg',
+  'Counseling Services': '/counseling.jpg',
 }
 
 // ---- Computed ----
@@ -124,15 +132,36 @@ function statusColor(status: number): string {
 }
 
 function categoryColor(category: string): string {
-  return categoryColors[category] || '#607d8b'
+  // Try exact match first
+  if (categoryColors[category]) return categoryColors[category]
+  // Try case-insensitive match
+  const lower = category.toLowerCase()
+  for (const [key, value] of Object.entries(categoryColors)) {
+    if (key.toLowerCase() === lower) return value
+  }
+  return '#607d8b'
 }
 
 function categoryIcon(category: string): string {
-  return categoryIcons[category] || 'inventory_2'
+  // Try exact match first
+  if (categoryIcons[category]) return categoryIcons[category]
+  // Try case-insensitive match
+  const lower = category.toLowerCase()
+  for (const [key, value] of Object.entries(categoryIcons)) {
+    if (key.toLowerCase() === lower) return value
+  }
+  return 'inventory_2'
 }
 
 function categoryImage(category: string): string {
-  return categoryImages[category] || ''
+  // Try exact match first
+  if (categoryImages[category]) return categoryImages[category]
+  // Try case-insensitive match
+  const lower = category.toLowerCase()
+  for (const [key, value] of Object.entries(categoryImages)) {
+    if (key.toLowerCase() === lower) return value
+  }
+  return ''
 }
 
 function formatDate(iso: string): string {
@@ -168,172 +197,31 @@ function openDetail(entry: ServiceHistoryEntry | null) {
 async function fetchServiceHistory() {
   loading.value = true
   try {
-    const res = await api.get<ServiceHistoryEntry[]>('/api/v1/transactions/history?top=100')
-    historyEntries.value = Array.isArray(res.data) ? res.data : []
+    const res = await api.get<unknown[]>('/api/v1/transactions')
+    const data = Array.isArray(res.data) ? (res.data as Record<string, unknown>[]) : []
+
+    historyEntries.value = data.map((item) => ({
+      id: Number(item.id) || 0,
+      service_id: Number(item.service_id) || 0,
+      service_name: String(item.name ?? item.service_name ?? ''),
+      service_category: String(item.category ?? item.service_category ?? ''),
+      service_description: String(item.description ?? item.service_description ?? ''),
+      person_id: Number(item.person_id ?? item.applicant_id ?? 0),
+      person_name: String(item.applicant_name ?? item.person_name ?? ''),
+      person_disability_type: String(item.disability_type ?? ''),
+      person_contact: String(item.contact_no ?? item.person_contact ?? ''),
+      status: Number(item.status ?? 0),
+      applied_at: String(item.date_created ?? item.applied_at ?? ''),
+      approved_at: null,
+      completed_at: null,
+      notes: null,
+      documents: [],
+    }))
   } catch (error) {
     console.error('Failed to fetch service history:', error)
-    applyMockData()
   } finally {
     loading.value = false
   }
-}
-
-function applyMockData() {
-  historyEntries.value = [
-    {
-      id: 1201,
-      service_id: 1,
-      service_name: 'Financial Assistance',
-      service_category: 'Financial',
-      service_description: 'Monthly financial aid for persons with disabilities',
-      person_id: 101,
-      person_name: 'Maria Santos',
-      person_disability_type: 'Visual Impairment',
-      person_contact: '0917-123-4567',
-      status: 4,
-      applied_at: '2025-01-05T08:00:00Z',
-      approved_at: '2025-01-07T10:00:00Z',
-      completed_at: '2025-01-15T08:30:00Z',
-      notes: 'Received full amount of financial assistance.',
-      documents: ['receipt_001.pdf', 'approval_letter.pdf'],
-    },
-    {
-      id: 1202,
-      service_id: 2,
-      service_name: 'Medical Aid',
-      service_category: 'Medical',
-      service_description: 'Coverage for medical expenses and check-ups',
-      person_id: 102,
-      person_name: 'Juan dela Cruz',
-      person_disability_type: 'Mobility Disability',
-      person_contact: '0918-234-5678',
-      status: 1,
-      applied_at: '2025-01-10T14:00:00Z',
-      approved_at: null,
-      completed_at: null,
-      notes: null,
-      documents: ['medical_cert.pdf'],
-    },
-    {
-      id: 1203,
-      service_id: 3,
-      service_name: 'Skills Training',
-      service_category: 'Training',
-      service_description: 'Vocational and livelihood skills development',
-      person_id: 103,
-      person_name: 'Ana Reyes',
-      person_disability_type: 'Hearing Impairment',
-      person_contact: '0919-345-6789',
-      status: 2,
-      applied_at: '2025-01-08T10:15:00Z',
-      approved_at: '2025-01-10T09:00:00Z',
-      completed_at: null,
-      notes: 'Enrolled in next training batch.',
-      documents: ['application_form.pdf', 'id_copy.pdf'],
-    },
-    {
-      id: 1204,
-      service_id: 4,
-      service_name: 'Wheelchair Provision',
-      service_category: 'Mobility',
-      service_description: 'Free wheelchairs and mobility devices',
-      person_id: 104,
-      person_name: 'Pedro Garcia',
-      person_disability_type: 'Mobility Disability',
-      person_contact: '0920-456-7890',
-      status: 3,
-      applied_at: '2025-01-03T16:45:00Z',
-      approved_at: null,
-      completed_at: null,
-      notes: 'Incomplete documentation provided.',
-      documents: ['partial_form.pdf'],
-    },
-    {
-      id: 1205,
-      service_id: 5,
-      service_name: 'Psychological Counseling',
-      service_category: 'Counseling',
-      service_description: 'Mental health support and counseling sessions',
-      person_id: 105,
-      person_name: 'Luz Villanueva',
-      person_disability_type: 'Cognitive Disability',
-      person_contact: '0921-567-8901',
-      status: 1,
-      applied_at: '2025-01-12T09:00:00Z',
-      approved_at: null,
-      completed_at: null,
-      notes: null,
-      documents: ['referral_letter.pdf'],
-    },
-    {
-      id: 1206,
-      service_id: 6,
-      service_name: 'Scholarship Program',
-      service_category: 'Education',
-      service_description: 'Educational assistance for PWD students',
-      person_id: 106,
-      person_name: 'Carlos Mendoza',
-      person_disability_type: 'Visual Impairment',
-      person_contact: '0922-678-9012',
-      status: 4,
-      applied_at: '2024-12-20T11:30:00Z',
-      approved_at: '2024-12-22T14:00:00Z',
-      completed_at: '2025-01-10T08:00:00Z',
-      notes: 'Scholarship granted for Spring 2025 semester.',
-      documents: ['grades.pdf', 'enrollment_form.pdf'],
-    },
-    {
-      id: 1207,
-      service_id: 1,
-      service_name: 'Financial Assistance',
-      service_category: 'Financial',
-      service_description: 'Monthly financial aid for persons with disabilities',
-      person_id: 107,
-      person_name: 'Rosa Fernandez',
-      person_disability_type: 'Speech Impairment',
-      person_contact: '0923-789-0123',
-      status: 4,
-      applied_at: '2024-12-15T07:30:00Z',
-      approved_at: '2024-12-18T09:00:00Z',
-      completed_at: '2025-01-05T10:00:00Z',
-      notes: null,
-      documents: ['application.pdf'],
-    },
-    {
-      id: 1208,
-      service_id: 2,
-      service_name: 'Medical Aid',
-      service_category: 'Medical',
-      service_description: 'Coverage for medical expenses and check-ups',
-      person_id: 108,
-      person_name: 'Diego Ramos',
-      person_disability_type: 'Mobility Disability',
-      person_contact: '0924-890-1234',
-      status: 2,
-      applied_at: '2025-01-11T11:00:00Z',
-      approved_at: '2025-01-13T14:30:00Z',
-      completed_at: null,
-      notes: 'Approved for physical therapy sessions.',
-      documents: ['medical_cert.pdf', 'doctor_referral.pdf'],
-    },
-    {
-      id: 1209,
-      service_id: 3,
-      service_name: 'Skills Training',
-      service_category: 'Training',
-      service_description: 'Vocational and livelihood skills development',
-      person_id: 109,
-      person_name: 'Elena Torres',
-      person_disability_type: 'Hearing Impairment',
-      person_contact: '0925-901-2345',
-      status: 4,
-      applied_at: '2024-11-20T08:45:00Z',
-      approved_at: '2024-11-22T10:00:00Z',
-      completed_at: '2024-12-28T16:00:00Z',
-      notes: 'Completed sewing certification course.',
-      documents: ['certificate.pdf', 'attendance.pdf'],
-    },
-  ]
 }
 
 onMounted(() => {
@@ -473,7 +361,7 @@ onMounted(() => {
             </div>
 
             <div class="card-footer">
-              <div class="card-docs">
+              <div v-if="entry.documents.length" class="card-docs">
                 <span class="material-symbols-outlined doc-icon">description</span>
                 <span>{{ entry.documents.length }} document{{ entry.documents.length !== 1 ? 's' : '' }}</span>
               </div>

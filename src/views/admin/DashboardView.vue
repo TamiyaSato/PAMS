@@ -204,7 +204,7 @@ async function updateApplicationStatus(id: number, status: number) {
 </script>
 
 <template>
-  <v-container fluid class="admin-container">
+  <div class="dashboard-view">
     <div class="top-header">
       <h2>Dashboard</h2>
 
@@ -372,18 +372,78 @@ async function updateApplicationStatus(id: number, status: number) {
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </v-container>
+  </div>
 </template>
 
 <style scoped>
+/* === Wrapper === */
+.dashboard-view {
+  background: #eef5f9;
+  padding: 24px;
+  min-height: 100vh;
+  font-family: Inter, sans-serif;
+}
+
+/* === Top Header === */
+.top-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.top-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* === Stats === */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: #0b1b5a;
+  color: white;
+  padding: 18px;
+  border-radius: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stat-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.count {
+  background: #ffbf00;
+  color: black;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+/* === Content Card === */
 .content-card {
   background: white;
   border-radius: 16px;
   padding: 20px;
 }
+
 .content-card h3 {
   margin-bottom: 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2a44;
 }
+
 .service-row {
   display: grid;
   grid-template-columns: auto 1.6fr 1.6fr 1fr auto auto;
@@ -391,21 +451,13 @@ async function updateApplicationStatus(id: number, status: number) {
   align-items: center;
   margin-bottom: 12px;
 }
+
 .service-info {
   display: flex;
   flex-direction: column;
   font-size: 14px;
 }
-.status.active {
-  color: #1e8e3e;
-  font-weight: 600;
-}
-.link-btn {
-  background: none;
-  border: none;
-  color: #0d6efd;
-  cursor: pointer;
-}
+
 .review-row {
   display: grid;
   grid-template-columns: 2.4fr 1.4fr 1.6fr 1.2fr auto;
@@ -413,11 +465,13 @@ async function updateApplicationStatus(id: number, status: number) {
   gap: 24px;
   margin-bottom: 12px;
 }
+
 .review-cell {
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
+
 .review-cell.applicant {
   flex-direction: row;
   align-items: center;
@@ -454,6 +508,7 @@ async function updateApplicationStatus(id: number, status: number) {
   cursor: pointer;
   font-weight: 500;
 }
+
 .actions-menu button:hover {
   background: #eef5f9;
 }
@@ -463,11 +518,13 @@ async function updateApplicationStatus(id: number, status: number) {
   font-weight: 600;
   line-height: 1.2;
 }
+
 .label {
   font-size: 12px;
   color: #8a8a8a;
   line-height: 1.2;
 }
+
 .actions-btn {
   background: #0b1b5a;
   color: white;
@@ -480,19 +537,6 @@ async function updateApplicationStatus(id: number, status: number) {
   height: 36px;
   cursor: pointer;
 }
-.pill {
-  border-radius: 999px;
-  padding: 10px 16px;
-  font-weight: 600;
-  border: none;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.pill.dark {
-  background: #0b1b5a;
-  color: white;
-}
 
 .appointment {
   display: flex;
@@ -500,30 +544,46 @@ async function updateApplicationStatus(id: number, status: number) {
   gap: 12px;
   margin-bottom: 16px;
 }
+
 .appointment:last-of-type {
   margin-bottom: 0;
 }
+
 .appointment-details {
   flex: 1;
   min-width: 0;
 }
+
 .appointment-details strong {
   display: block;
   font-size: 14px;
   margin-bottom: 2px;
 }
+
 .appointment-details p {
   margin: 0;
   font-size: 13px;
   color: #666;
   line-height: 1.4;
 }
+
 .appointment-service {
   font-weight: 500;
   color: #333;
 }
+
 .appointment-meta {
   font-size: 12px;
   color: #8a8a8a;
+}
+
+.link {
+  color: #0d6efd;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.mt-4 {
+  margin-top: 16px;
 }
 </style>

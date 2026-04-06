@@ -243,7 +243,7 @@ function viewAppointment(a: NormalizedAppointment) {
 </script>
 
 <template>
-  <div class="page">
+  <div class="appointments-view">
     <v-dialog v-model="viewDialog" max-width="600">
       <v-card v-if="selectedAppointment">
         <v-card-title>Appointment Details</v-card-title>
@@ -373,10 +373,10 @@ function viewAppointment(a: NormalizedAppointment) {
       </v-card>
     </v-dialog>
 
-    <div class="header">
+    <div class="top-header">
       <h2>Appointments & Schedule</h2>
 
-      <div class="header-actions">
+      <div class="top-actions">
         <v-dialog v-model="dialog" max-width="600">
           <template #activator="{ props }">
             <button class="pill yellow" v-bind="props">+ New Appointment</button>
@@ -447,23 +447,23 @@ function viewAppointment(a: NormalizedAppointment) {
     </div>
 
     <div class="stats">
-      <div class="stat">
+      <div class="stat-card">
         <span>Today's Appointments</span>
         <b>{{ todaysAppointments.length }}</b>
       </div>
-      <div class="stat">
+      <div class="stat-card">
         <span>Upcoming Visits</span>
         <b>{{ upcomingAppointments.length }}</b>
       </div>
-      <div class="stat">
+      <div class="stat-card">
         <span>Confirmed</span>
         <b>{{ confirmedAppointments.length }}</b>
       </div>
-      <div class="stat">
+      <div class="stat-card">
         <span>Pending</span>
         <b>{{ pendingAppointments.length }}</b>
       </div>
-      <div class="stat">
+      <div class="stat-card">
         <span>Reschedule</span>
         <b>{{ rescheduleAppointments.length }}</b>
       </div>
@@ -528,7 +528,7 @@ function viewAppointment(a: NormalizedAppointment) {
       <div class="all-appointments-header">
         <h3>All Appointments</h3>
 
-        <div class="header-actions"></div>
+        <div class="top-actions"></div>
       </div>
 
       <div class="appointments-columns sticky-header">
@@ -570,32 +570,68 @@ function viewAppointment(a: NormalizedAppointment) {
 </template>
 
 <style scoped>
-.page {
+/* === Wrapper === */
+.appointments-view {
   background: #eef5f9;
   padding: 24px;
+  min-height: 100vh;
   font-family: Inter, sans-serif;
 }
 
-.header {
+/* === Top Header === */
+.top-header {
   display: flex;
   justify-content: space-between;
   margin-bottom: 24px;
 }
 
-.header-actions {
+.top-actions {
   display: flex;
   gap: 12px;
   align-items: center;
 }
 
-.search {
-  background: white;
+/* === Pill Buttons === */
+.pill {
   border-radius: 999px;
-  padding: 8px 14px;
+  padding: 10px 18px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.pill.yellow {
+  background: #ffbf00;
+}
+
+.pill.blue.small {
+  background-color: #0b1b5a;
+  color: white;
+  font-size: 0.85rem;
+  padding: 6px 12px;
+}
+
+.pill.blue.small:hover {
+  background-color: #1e40af;
+}
+
+.pill.dark {
+  background: #0b1b5a;
+  color: white;
   display: flex;
+  align-items: center;
   gap: 6px;
 }
 
+.pill.green {
+  background: #1f8f4a;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* === Stats === */
 .stats {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -603,7 +639,7 @@ function viewAppointment(a: NormalizedAppointment) {
   margin-bottom: 24px;
 }
 
-.stat {
+.stat-card {
   background: #0b1b5a;
   color: white;
   padding: 16px;
@@ -612,6 +648,7 @@ function viewAppointment(a: NormalizedAppointment) {
   justify-content: space-between;
 }
 
+/* === Schedule Section === */
 .schedule {
   display: grid;
   grid-template-columns: 1fr 1.2fr;
@@ -626,13 +663,15 @@ function viewAppointment(a: NormalizedAppointment) {
   padding: 16px;
 }
 
-.appointment {
-  background: #eef5f9;
-  padding: 14px;
-  border-radius: 12px;
-  margin-bottom: 12px;
+.details h4 {
+  margin-top: 0;
+  margin-bottom: 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2a44;
 }
 
+/* === Appointment Detail Card === */
 .appointment-detail-card {
   background: #eef5f9;
   padding: 16px;
@@ -683,44 +722,31 @@ function viewAppointment(a: NormalizedAppointment) {
   font-size: 0.95rem;
 }
 
-.pill {
+/* === Status Pills === */
+.status-pill {
+  display: inline-block;
+  padding: 6px 14px;
   border-radius: 999px;
-  padding: 10px 18px;
-  border: none;
-  cursor: pointer;
-}
-
-.pill.yellow {
-  background: #ffbf00;
-}
-
-.pill.blue.small {
-  background-color: #0b1b5a;
-  color: white;
   font-size: 0.85rem;
-  padding: 6px 12px;
+  font-weight: 600;
 }
 
-.pill.blue.small:hover {
-  background-color: #1e40af;
+.status-pill.confirmed {
+  background: #dcfce7;
+  color: #166534;
 }
 
-.pill.dark {
-  background: #0b1b5a;
-  color: white;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.status-pill.pending {
+  background: #fef3c7;
+  color: #b45309;
 }
 
-.pill.green {
-  background: #1f8f4a;
-  color: white;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.status-pill.reschedule {
+  background: #dbeafe;
+  color: #1e40af;
 }
 
+/* === Toggle === */
 .toggle {
   display: flex;
   background: #e5e7eb;
@@ -742,10 +768,25 @@ function viewAppointment(a: NormalizedAppointment) {
   color: white;
 }
 
+/* === All Appointments === */
 .all-appointments {
   background: white;
   border-radius: 16px;
   padding: 16px;
+}
+
+.all-appointments-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.all-appointments-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2a44;
 }
 
 .sticky-header {
@@ -807,6 +848,10 @@ function viewAppointment(a: NormalizedAppointment) {
   margin-bottom: 12px;
 }
 
+.appointment-row:hover {
+  background: #e0e9f1;
+}
+
 .cell {
   font-size: 0.95rem;
 }
@@ -826,28 +871,6 @@ function viewAppointment(a: NormalizedAppointment) {
   color: #6b7280;
 }
 
-.status-pill {
-  display: inline-block;
-  padding: 6px 14px;
-  border-radius: 999px;
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-.status-pill.confirmed {
-  background: #dcfce7;
-  color: #166534;
-}
-
-.status-pill.pending {
-  background: #fef3c7;
-  color: #b45309;
-}
-
-.status-pill.reschedule {
-  background: #dbeafe;
-  color: #1e40af;
-}
 .wrap-text input {
   white-space: normal !important;
   overflow-wrap: break-word;
