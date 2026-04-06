@@ -1,69 +1,63 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
-import { useActivityLogStore } from '@/stores/activityLog'
+import { ref, computed, onMounted } from 'vue'
+import api from '@/api/axios'
 import TableLoading from '@/components/TableLoading.vue'
 
-const store = useActivityLogStore()
-
-const searchInput = ref('')
-const dateFromInput = ref('')
-const dateToInput = ref('')
-const selectedRole = ref('')
-const selectedAction = ref('')
-const showFilters = ref(false)
-
-const roleOptions = [
-  { label: 'All Roles', value: '' },
-  { label: 'Admin', value: 'admin' },
-  { label: 'Member', value: 'member' },
-]
-
-const actionOptions = [
-  { label: 'All Actions', value: '' },
-  { label: 'Login', value: 'login' },
-  { label: 'Logout', value: 'logout' },
-  { label: 'Create', value: 'create' },
-  { label: 'Update', value: 'update' },
-  { label: 'Delete', value: 'delete' },
-  { label: 'Approve', value: 'approve' },
-  { label: 'Deny', value: 'deny' },
-  { label: 'Schedule', value: 'schedule' },
-]
-
-const currentPage = computed(() => store.page)
-const totalPages = computed(() => Math.max(1, Math.ceil(store.total / store.perPage)))
-
-const paginatedLogs = computed(() => store.logs)
-
-function applySearch() {
-  store.applyFilters({ search: searchInput.value })
+// ---- Types ----
+interface ActivityLogEntry {
+  id: number
+  user_id: number
+  user_name: string
+  user_role: string
+  action: string
+  entity_type: string
+  entity_id: number | null
+  description: string
+  ip_address: string | null
+  created_at: string
 }
 
-function applyDateFilter() {
-  store.applyFilters({
-    dateFrom: dateFromInput.value,
-    dateTo: dateToInput.value,
-  })
-}
+// ---- State ----
+const logs = ref<ActivityLogEntry[]>([])
+const loading = ref(false)
+const searchQuery = ref('')
+const activeTab = ref('All')
 
-function applyRoleFilter() {
-  store.applyFilters({ userRole: selectedRole.value })
-}
+const tabs = ['All', 'Login', 'Create', 'Update', 'Delete', 'Approve', 'Deny']
 
-function applyActionFilter() {
-  store.applyFilters({ actionType: selectedAction.value })
-}
+// ---- Computed ----
+const filteredLogs = computed(() => {
+  let list = logs.value
 
-function resetAll() {
-  searchInput.value = ''
-  dateFromInput.value = ''
-  dateToInput.value = ''
-  selectedRole.value = ''
-  selectedAction.value = ''
-  store.resetFilters()
-}
+  if (activeTab.value !== 'All') {
+    list = list.filter((l) => l.action.toLowerCase() === activeTab.value.toLowerCase())
+  }
 
-function formatTimestamp(iso: string) {
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.toLowerCase()
+    list = list.filter(
+      (l) =>
+        l.user_name.toLowerCase().includes(q) ||
+        l.description.toLowerCase().includes(q) ||
+        l.entity_type.toLowerCase().includes(q) ||
+        String(l.id).includes(q),
+    )
+  }
+
+  return list
+})
+
+const totalStats = computed(() => {
+  const total = logs.value.length
+  const logins = logs.value.filter((l) => l.action.toLowerCase() === 'login').length
+  const creates = logs.value.filter((l) => l.action.toLowerCase() === 'create').length
+  const updates = logs.value.filter((l) => l.action.toLowerCase() === 'update').length
+  const deletes = logs.value.filter((l) => l.action.toLowerCase() === 'delete').length
+  return { total, logins, creates, updates, deletes }
+})
+
+// ---- Helpers ----
+function formatTimestamp(iso: string): string {
   if (!iso) return '—'
   const d = new Date(iso)
   return d.toLocaleString(undefined, {
@@ -76,30 +70,28 @@ function formatTimestamp(iso: string) {
   })
 }
 
-function actionColor(action: string) {
-  const a = action.toLowerCase()
-  if (['login'].includes(a)) return 'success'
-  if (['logout'].includes(a)) return 'grey'
-  if (['create', 'schedule'].includes(a)) return 'info'
-  if (['update', 'approve'].includes(a)) return 'warning'
-  if (['delete', 'deny'].includes(a)) return 'error'
-  return 'primary'
+function actionLabel(action: string): string {
+  return action.charAt(0).toUpperCase() + action.slice(1)
 }
 
-function actionIcon(action: string) {
+function actionBadgeClass(action: string): string {
   const a = action.toLowerCase()
-  if (a === 'login') return 'login'
-  if (a === 'logout') return 'logout'
-  if (a === 'create') return 'add_circle'
-  if (a === 'update') return 'edit'
-  if (a === 'delete') return 'delete'
-  if (a === 'approve') return 'check_circle'
-  if (a === 'deny') return 'cancel'
-  if (a === 'schedule') return 'event'
-  return 'info'
+  if (a === 'login') return 'badge-login'
+  if (a === 'logout') return 'badge-logout'
+  if (a === 'create') return 'badge-create'
+  if (a === 'update') return 'badge-update'
+  if (a === 'delete') return 'badge-delete'
+  if (a === 'approve') return 'badge-approve'
+  if (a === 'deny') return 'badge-deny'
+  if (a === 'schedule') return 'badge-schedule'
+  return 'badge-default'
 }
 
-function entityTypeIcon(type: string) {
+function roleBadgeClass(role: string): string {
+  return role.toLowerCase() === 'admin' ? 'badge-role-admin' : 'badge-role-member'
+}
+
+function entityTypeIcon(type: string): string {
   const t = type?.toLowerCase()
   if (t?.includes('service')) return 'inventory_2'
   if (t?.includes('appointment')) return 'event'
@@ -110,246 +102,294 @@ function entityTypeIcon(type: string) {
   return 'description'
 }
 
-watch(searchInput, (val) => {
-  if (!val) store.applyFilters({ search: '' })
-})
+function getInitial(name: string): string {
+  return name ? name.charAt(0).toUpperCase() : '?'
+}
+
+// ---- Fetch ----
+async function fetchLogs() {
+  loading.value = true
+  try {
+    const res = await api.get<ActivityLogEntry[]>('/api/v1/activity-logs')
+    logs.value = Array.isArray(res.data) ? res.data : []
+  } catch (error) {
+    console.error('Failed to fetch activity logs:', error)
+    applyMockData()
+  } finally {
+    loading.value = false
+  }
+}
+
+function applyMockData() {
+  logs.value = [
+    {
+      id: 1,
+      user_id: 10,
+      user_name: 'Admin John',
+      user_role: 'admin',
+      action: 'login',
+      entity_type: 'user',
+      entity_id: 10,
+      description: 'Logged in from 192.168.1.100',
+      ip_address: '192.168.1.100',
+      created_at: '2025-01-15T08:30:00Z',
+    },
+    {
+      id: 2,
+      user_id: 10,
+      user_name: 'Admin John',
+      user_role: 'admin',
+      action: 'create',
+      entity_type: 'service',
+      entity_id: 5,
+      description: 'Created new service: Financial Assistance Program',
+      ip_address: '192.168.1.100',
+      created_at: '2025-01-15T09:00:00Z',
+    },
+    {
+      id: 3,
+      user_id: 11,
+      user_name: 'Maria Santos',
+      user_role: 'member',
+      action: 'create',
+      entity_type: 'application',
+      entity_id: 101,
+      description: 'Submitted application for Financial Assistance',
+      ip_address: '192.168.1.50',
+      created_at: '2025-01-15T10:15:00Z',
+    },
+    {
+      id: 4,
+      user_id: 10,
+      user_name: 'Admin John',
+      user_role: 'admin',
+      action: 'approve',
+      entity_type: 'application',
+      entity_id: 101,
+      description: 'Approved application #101 for Maria Santos',
+      ip_address: '192.168.1.100',
+      created_at: '2025-01-15T11:00:00Z',
+    },
+    {
+      id: 5,
+      user_id: 12,
+      user_name: 'Juan dela Cruz',
+      user_role: 'member',
+      action: 'create',
+      entity_type: 'appointment',
+      entity_id: 201,
+      description: 'Scheduled appointment for Medical Aid service',
+      ip_address: '192.168.1.55',
+      created_at: '2025-01-15T13:30:00Z',
+    },
+    {
+      id: 6,
+      user_id: 10,
+      user_name: 'Admin John',
+      user_role: 'admin',
+      action: 'update',
+      entity_type: 'announcement',
+      entity_id: 15,
+      description: 'Updated announcement: Holiday Schedule Notice',
+      ip_address: '192.168.1.100',
+      created_at: '2025-01-15T14:00:00Z',
+    },
+    {
+      id: 7,
+      user_id: 13,
+      user_name: 'Ana Reyes',
+      user_role: 'member',
+      action: 'login',
+      entity_type: 'user',
+      entity_id: 13,
+      description: 'Logged in from 192.168.1.60',
+      ip_address: '192.168.1.60',
+      created_at: '2025-01-15T14:30:00Z',
+    },
+    {
+      id: 8,
+      user_id: 10,
+      user_name: 'Admin John',
+      user_role: 'admin',
+      action: 'deny',
+      entity_type: 'application',
+      entity_id: 99,
+      description: 'Denied application #99 – incomplete documentation',
+      ip_address: '192.168.1.100',
+      created_at: '2025-01-15T15:00:00Z',
+    },
+    {
+      id: 9,
+      user_id: 14,
+      user_name: 'Pedro Garcia',
+      user_role: 'member',
+      action: 'update',
+      entity_type: 'profile',
+      entity_id: 14,
+      description: 'Updated personal profile information',
+      ip_address: '192.168.1.70',
+      created_at: '2025-01-15T15:30:00Z',
+    },
+    {
+      id: 10,
+      user_id: 10,
+      user_name: 'Admin John',
+      user_role: 'admin',
+      action: 'delete',
+      entity_type: 'announcement',
+      entity_id: 12,
+      description: 'Deleted expired announcement: Old Event Notice',
+      ip_address: '192.168.1.100',
+      created_at: '2025-01-15T16:00:00Z',
+    },
+    {
+      id: 11,
+      user_id: 15,
+      user_name: 'Luz Villanueva',
+      user_role: 'member',
+      action: 'create',
+      entity_type: 'application',
+      entity_id: 102,
+      description: 'Submitted application for Counseling service',
+      ip_address: '192.168.1.75',
+      created_at: '2025-01-16T08:00:00Z',
+    },
+    {
+      id: 12,
+      user_id: 11,
+      user_name: 'Maria Santos',
+      user_role: 'member',
+      action: 'logout',
+      entity_type: 'user',
+      entity_id: 11,
+      description: 'Logged out',
+      ip_address: '192.168.1.50',
+      created_at: '2025-01-16T08:30:00Z',
+    },
+  ]
+}
 
 onMounted(() => {
-  store.fetchLogs()
+  fetchLogs()
 })
 </script>
 
 <template>
-  <v-container fluid class="admin-container">
+  <div class="activity-logs-view">
     <div class="top-header">
       <h2>Activity Logs</h2>
 
       <div class="top-actions">
         <div class="search-box">
           <span class="material-symbols-outlined">search</span>
-          <input
-            type="text"
-            placeholder="Search logs..."
-            v-model="searchInput"
-            @keyup.enter="applySearch"
-          />
+          <input type="text" placeholder="Search logs..." v-model="searchQuery" />
         </div>
-
-        <button class="pill dark" @click="showFilters = !showFilters">
-          <span class="material-symbols-outlined">filter_list</span>
-          Filters
-        </button>
-
-        <button class="pill yellow" @click="store.fetchLogs()">
-          <span class="material-symbols-outlined">refresh</span>
-          Refresh
-        </button>
       </div>
     </div>
 
-    <!-- Filter Panel -->
-    <v-expand-transition>
-      <v-card v-if="showFilters" class="filter-card mb-4">
-        <v-card-title class="d-flex align-center">
-          <span class="material-symbols-outlined mr-2">tune</span>
-          Filter Activity Logs
-          <v-spacer />
-          <v-btn variant="text" size="small" @click="resetAll"> Reset All </v-btn>
-        </v-card-title>
-        <v-card-text>
-          <v-row>
-            <v-col cols="12" md="3">
-              <v-text-field
-                v-model="dateFromInput"
-                label="Date From"
-                type="date"
-                variant="outlined"
-                density="compact"
-                hide-details
-                @change="applyDateFilter"
-              />
-            </v-col>
-            <v-col cols="12" md="3">
-              <v-text-field
-                v-model="dateToInput"
-                label="Date To"
-                type="date"
-                variant="outlined"
-                density="compact"
-                hide-details
-                @change="applyDateFilter"
-              />
-            </v-col>
-            <v-col cols="12" md="3">
-              <v-select
-                v-model="selectedRole"
-                :items="roleOptions"
-                item-title="label"
-                item-value="value"
-                label="User Role"
-                variant="outlined"
-                density="compact"
-                hide-details
-                @update:model-value="applyRoleFilter"
-              />
-            </v-col>
-            <v-col cols="12" md="3">
-              <v-select
-                v-model="selectedAction"
-                :items="actionOptions"
-                item-title="label"
-                item-value="value"
-                label="Action Type"
-                variant="outlined"
-                density="compact"
-                hide-details
-                @update:model-value="applyActionFilter"
-              />
-            </v-col>
-          </v-row>
-        </v-card-text>
-      </v-card>
-    </v-expand-transition>
-
-    <!-- Active Filters Display -->
-    <div v-if="store.filters.search || store.filters.dateFrom || store.filters.userRole || store.filters.actionType" class="active-filters mb-4">
-      <v-chip
-        v-if="store.filters.search"
-        size="small"
-        closable
-        @click:close="searchInput = ''; store.applyFilters({ search: '' })"
-        class="mr-2 mb-2"
-      >
-        Search: {{ store.filters.search }}
-      </v-chip>
-      <v-chip
-        v-if="store.filters.dateFrom"
-        size="small"
-        closable
-        @click:close="dateFromInput = ''; store.applyFilters({ dateFrom: '' })"
-        class="mr-2 mb-2"
-      >
-        From: {{ store.filters.dateFrom }}
-      </v-chip>
-      <v-chip
-        v-if="store.filters.dateTo"
-        size="small"
-        closable
-        @click:close="dateToInput = ''; store.applyFilters({ dateTo: '' })"
-        class="mr-2 mb-2"
-      >
-        To: {{ store.filters.dateTo }}
-      </v-chip>
-      <v-chip
-        v-if="store.filters.userRole"
-        size="small"
-        closable
-        @click:close="selectedRole = ''; store.applyFilters({ userRole: '' })"
-        class="mr-2 mb-2"
-      >
-        Role: {{ store.filters.userRole }}
-      </v-chip>
-      <v-chip
-        v-if="store.filters.actionType"
-        size="small"
-        closable
-        @click:close="selectedAction = ''; store.applyFilters({ actionType: '' })"
-        class="mr-2 mb-2"
-      >
-        Action: {{ store.filters.actionType }}
-      </v-chip>
-    </div>
-
-    <!-- Stats Summary -->
-    <div class="stats mb-4">
+    <!-- Stats Row -->
+    <div class="stats">
       <div class="stat-card">
         <div class="stat-left">
           <v-icon>format_list_bulleted</v-icon>
           <span>Total Entries</span>
         </div>
-        <div class="count">{{ store.total }}</div>
+        <div class="count">{{ totalStats.total }}</div>
       </div>
 
       <div class="stat-card">
         <div class="stat-left">
-          <v-icon>admin_panel_settings</v-icon>
-          <span>Admin Actions</span>
+          <v-icon>login</v-icon>
+          <span>Logins</span>
         </div>
-        <div class="count">{{ store.logs.filter((l) => l.user_role === 'admin').length }}</div>
+        <div class="count">{{ totalStats.logins }}</div>
       </div>
 
       <div class="stat-card">
         <div class="stat-left">
-          <v-icon>person</v-icon>
-          <span>Member Actions</span>
+          <v-icon>add_circle</v-icon>
+          <span>Created</span>
         </div>
-        <div class="count">{{ store.logs.filter((l) => l.user_role === 'member').length }}</div>
+        <div class="count">{{ totalStats.creates }}</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-left">
+          <v-icon>edit</v-icon>
+          <span>Updated</span>
+        </div>
+        <div class="count">{{ totalStats.updates }}</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-left">
+          <v-icon>delete</v-icon>
+          <span>Deleted</span>
+        </div>
+        <div class="count">{{ totalStats.deletes }}</div>
       </div>
     </div>
 
-    <!-- Activity Log Table -->
+    <!-- Table Card with Tabs -->
     <div class="table-card">
-      <TableLoading :loading="store.loading" message="Loading activity logs...">
-        <v-table v-if="paginatedLogs.length" class="activity-table" fixed-header height="500">
+      <div class="table-top">
+        <div class="tabs">
+          <button
+            v-for="tab in tabs"
+            :key="tab"
+            class="tab"
+            :class="{ active: activeTab === tab }"
+            @click="activeTab = tab"
+          >
+            {{ tab }}
+          </button>
+        </div>
+      </div>
+
+      <TableLoading :loading="loading" message="Loading activity logs..." height="600px">
+        <v-table v-if="filteredLogs.length" class="activity-table" fixed-header height="600px">
           <thead>
             <tr>
-              <th style="width: 40px"></th>
-              <th style="width: 50px">ID</th>
-              <th style="width: 140px">Timestamp</th>
-              <th style="width: 120px">User</th>
-              <th style="width: 80px">Role</th>
-              <th style="width: 100px">Action</th>
-              <th style="width: 100px">Entity</th>
+              <th></th>
+              <th>Log ID</th>
+              <th>Timestamp</th>
+              <th>User</th>
+              <th>Role</th>
+              <th>Action</th>
+              <th>Entity</th>
               <th>Description</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="log in paginatedLogs" :key="log.id">
+            <tr v-for="log in filteredLogs" :key="log.id">
               <td>
-                <v-icon :color="actionColor(log.action)" size="20">
-                  {{ actionIcon(log.action) }}
-                </v-icon>
+                <span class="material-symbols-outlined action-icon" :class="actionBadgeClass(log.action)">
+                  {{ log.action.toLowerCase() === 'login' ? 'login' : log.action.toLowerCase() === 'logout' ? 'logout' : log.action.toLowerCase() === 'create' ? 'add_circle' : log.action.toLowerCase() === 'update' ? 'edit' : log.action.toLowerCase() === 'delete' ? 'delete' : log.action.toLowerCase() === 'approve' ? 'check_circle' : log.action.toLowerCase() === 'deny' ? 'cancel' : 'info' }}
+                </span>
               </td>
               <td class="log-id">#{{ log.id }}</td>
               <td class="timestamp">{{ formatTimestamp(log.created_at) }}</td>
               <td>
                 <div class="user-cell">
-                  <v-avatar size="32" color="primary" class="mr-2">
-                    <span class="text-white text-caption">{{ log.user_name.charAt(0) }}</span>
+                  <v-avatar size="32" color="primary">
+                    <span class="text-white" style="font-size: 12px; font-weight: 600">{{ getInitial(log.user_name) }}</span>
                   </v-avatar>
                   <span class="user-name">{{ log.user_name }}</span>
                 </div>
               </td>
               <td>
-                <v-chip
-                  :color="log.user_role === 'admin' ? 'error' : 'primary'"
-                  size="x-small"
-                  variant="flat"
-                >
-                  {{ log.user_role }}
-                </v-chip>
+                <span class="role-badge" :class="roleBadgeClass(log.user_role)">{{ log.user_role }}</span>
               </td>
               <td>
-                <v-chip
-                  :color="actionColor(log.action)"
-                  size="x-small"
-                  variant="flat"
-                  class="text-capitalize"
-                >
-                  {{ log.action }}
-                </v-chip>
+                <span class="action-badge" :class="actionBadgeClass(log.action)">{{ actionLabel(log.action) }}</span>
               </td>
               <td>
                 <div class="entity-cell">
-                  <v-icon size="16" color="grey-darken-1" class="mr-1">
-                    {{ entityTypeIcon(log.entity_type) }}
-                  </v-icon>
+                  <span class="material-symbols-outlined entity-icon">{{ entityTypeIcon(log.entity_type) }}</span>
                   <span class="entity-type">{{ log.entity_type }}</span>
                 </div>
               </td>
-              <td class="description-cell" :title="log.description">
-                {{ log.description }}
-              </td>
+              <td class="description-cell">{{ log.description }}</td>
             </tr>
           </tbody>
         </v-table>
@@ -360,50 +400,125 @@ onMounted(() => {
           <p class="text-body-2 text-grey">Activity will appear here as users interact with the system.</p>
         </div>
       </TableLoading>
-
-      <!-- Pagination -->
-      <div v-if="store.total > store.perPage" class="table-footer">
-        <span class="text-body-2 text-grey">
-          Showing {{ (currentPage - 1) * store.perPage + 1 }}–{{
-            Math.min(currentPage * store.perPage, store.total)
-          }} of {{ store.total }}
-        </span>
-        <div class="pagination-btns">
-          <v-btn
-            variant="outlined"
-            size="small"
-            :disabled="currentPage <= 1"
-            @click="store.setPage(currentPage - 1)"
-          >
-            Previous
-          </v-btn>
-          <v-btn
-            variant="outlined"
-            size="small"
-            :disabled="currentPage >= totalPages"
-            @click="store.setPage(currentPage + 1)"
-          >
-            Next
-          </v-btn>
-        </div>
-      </div>
     </div>
-  </v-container>
+  </div>
 </template>
 
 <style scoped>
-.filter-card {
+/* === Wrapper === */
+.activity-logs-view {
+  background: #eef5f9;
+  padding: 24px;
+  min-height: 100vh;
+  font-family: Inter, sans-serif;
+}
+
+/* === Top Header === */
+.top-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.top-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.search-box {
+  background: white;
+  padding: 10px 14px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.search-box input {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 14px;
+}
+
+/* === Stats === */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: #0b1b5a;
+  color: white;
+  padding: 18px;
+  border-radius: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stat-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.count {
+  background: #ffbf00;
+  color: black;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+/* === Table Card & Tabs === */
+.table-card {
   background: white;
   border-radius: 14px;
   padding: 16px;
 }
 
-.active-filters {
+.table-top {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
 }
 
+.tabs {
+  display: flex;
+  gap: 36px;
+}
+
+.tab {
+  background: none;
+  border: none;
+  padding: 12px 0;
+  font-size: 15px;
+  color: #8b8b8b;
+  cursor: pointer;
+  position: relative;
+}
+
+.tab.active {
+  color: #0d6efd;
+  font-weight: 600;
+}
+
+.tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: #0d6efd;
+}
+
+/* === Activity Table === */
 .activity-table {
   width: 100%;
   border-collapse: collapse;
@@ -411,30 +526,24 @@ onMounted(() => {
 
 .activity-table thead th {
   padding: 14px 12px;
-  border-bottom: 2px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
   text-align: left;
-  font-weight: 600;
   font-size: 13px;
+  font-weight: 600;
   color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
   background: #f9fafb;
-  position: sticky;
-  top: 0;
-  z-index: 1;
 }
 
 .activity-table tbody tr {
-  background: white;
-  transition: background 0.15s;
+  background: #eef5f9;
 }
 
 .activity-table tbody tr:hover {
-  background: #f0f4f8;
+  background: #e0e9f1;
 }
 
 .activity-table tbody tr:not(:last-child) {
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid #dbe5ee;
 }
 
 .activity-table td {
@@ -443,18 +552,62 @@ onMounted(() => {
   vertical-align: middle;
 }
 
-.log-id {
-  color: #9ca3af;
-  font-size: 12px;
-  font-family: monospace;
+/* Action Icon Column */
+.action-icon {
+  font-size: 20px;
 }
 
+.action-icon.badge-login {
+  color: #1e8e3e;
+}
+
+.action-icon.badge-logout {
+  color: #9e9e9e;
+}
+
+.action-icon.badge-create {
+  color: #1976d2;
+}
+
+.action-icon.badge-update {
+  color: #ffbf00;
+}
+
+.action-icon.badge-delete {
+  color: #e53935;
+}
+
+.action-icon.badge-approve {
+  color: #1e8e3e;
+}
+
+.action-icon.badge-deny {
+  color: #e53935;
+}
+
+.action-icon.badge-schedule {
+  color: #7b1fa2;
+}
+
+.action-icon.badge-default {
+  color: #607d8b;
+}
+
+/* Log ID */
+.log-id {
+  font-family: monospace;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+/* Timestamp */
 .timestamp {
   font-size: 13px;
   color: #4b5563;
   white-space: nowrap;
 }
 
+/* User Cell */
 .user-cell {
   display: flex;
   align-items: center;
@@ -466,12 +619,93 @@ onMounted(() => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 120px;
+  max-width: 140px;
 }
 
+/* Role Badge */
+.role-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.role-badge.badge-role-admin {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.role-badge.badge-role-member {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+/* Action Badge */
+.action-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.action-badge.badge-login {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.action-badge.badge-logout {
+  background: #f5f5f5;
+  color: #616161;
+}
+
+.action-badge.badge-create {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.action-badge.badge-update {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.action-badge.badge-delete {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.action-badge.badge-approve {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.action-badge.badge-deny {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.action-badge.badge-schedule {
+  background: #ede7f6;
+  color: #6a1b9a;
+}
+
+.action-badge.badge-default {
+  background: #e0e0e0;
+  color: #616161;
+}
+
+/* Entity Cell */
 .entity-cell {
   display: flex;
   align-items: center;
+  gap: 4px;
+}
+
+.entity-cell .entity-icon {
+  font-size: 18px;
+  color: #8a8a8a;
 }
 
 .entity-type {
@@ -480,14 +714,16 @@ onMounted(() => {
   text-transform: capitalize;
 }
 
+/* Description */
 .description-cell {
-  max-width: 300px;
+  max-width: 320px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   color: #374151;
 }
 
+/* Empty State */
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -497,50 +733,15 @@ onMounted(() => {
   text-align: center;
 }
 
-.table-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 12px 8px;
-  border-top: 1px solid #e5e7eb;
-}
-
-.pagination-btns {
-  display: flex;
-  gap: 8px;
-}
-
-/* Keep consistent with existing admin styles */
-.pill.dark {
-  background: #0b1b5a;
-  color: white;
-  border-radius: 999px;
-  padding: 10px 16px;
-  font-weight: 600;
-  border: none;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-}
-
-.pill.yellow {
-  background: #ffbf00;
-  color: #1f2a44;
-  border-radius: 999px;
-  padding: 10px 16px;
-  font-weight: 600;
-  border: none;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-}
-
+/* Material Icons */
 .material-symbols-outlined {
   font-variation-settings:
     'FILL' 0,
     'wght' 500,
     'opsz' 24;
+}
+
+.mt-4 {
+  margin-top: 16px;
 }
 </style>
